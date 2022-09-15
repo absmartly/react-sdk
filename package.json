@@ -1,0 +1,28 @@
+{
+  "name": "react-sdk",
+  "version": "1.0.0",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/esm/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn build:esm && yarn build:cjs",
+    "build:esm": "tsc",
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs",
+    "dev": "tsc -w"
+  },
+  "devDependencies": {
+    "@types/react": "^16.8.0",
+    "@types/react-dom": "^16.8.0",
+    "react": "^16.8.0",
+    "react-dom": "^16.8.0",
+    "typescript": "^4.8.3"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "dependencies": {
+    "@absmartly/javascript-sdk": "^1.10.0"
+  }
+}
