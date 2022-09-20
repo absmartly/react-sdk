@@ -1,1 +1,1 @@
-export { Treatment } from "./Treatment";
+export { Treatment, TreatmentVariant } from "./Treatment";
