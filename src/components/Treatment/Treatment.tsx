@@ -8,7 +8,6 @@ interface TreatmentProps {
   name: string;
   context: typeof absmartly.Context;
   loading?: ReactNode;
-  attributes?: Record<string, unknown>;
   children?: ReactNode;
 }
 
