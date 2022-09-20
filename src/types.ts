@@ -9,6 +9,12 @@ export type SDKOptionsType = {
   timeout?: number;
 };
 
+export type TreatmentProps = {
+  variant: number;
+  variables: Record<string, any>;
+  loading: boolean;
+};
+
 export type Char =
   | "a"
   | "b"

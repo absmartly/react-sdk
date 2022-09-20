@@ -22,7 +22,11 @@ export const Treatment: FC<TreatmentProps> = ({
   name,
   context,
 }) => {
-  const [variantVariablesAndLoading, setVariantVariablesAndLoading] = useState({
+  const [variantVariablesAndLoading, setVariantVariablesAndLoading] = useState<{
+    variant: number;
+    variables: Record<string, unknown>;
+    loading: boolean;
+  }>({
     variant: 0,
     variables: {},
     loading: true,
@@ -68,9 +72,7 @@ export const Treatment: FC<TreatmentProps> = ({
 
   // Return function with variant number and variables
   if (typeof children === "function") {
-    return children({
-      ...variantVariablesAndLoading,
-    });
+    return children(variantVariablesAndLoading);
   }
 
   const childrenInfo = React.Children.map(children, (child, i) => {
