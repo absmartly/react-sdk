@@ -1,16 +1,22 @@
-import { SDKProvider, useABSmartly } from "./components/SDKProvider";
+import {
+  SDKProvider,
+  useABSmartly,
+  withABSmartly,
+} from "./components/SDKProvider";
 import { Treatment, TreatmentVariant } from "./components/Treatment";
 import { mergeConfig } from "@absmartly/javascript-sdk";
-import { TreatmentProps } from "./types";
+import { TreatmentProps, ABSmartlySDK } from "./types";
 
 export * from "@absmartly/javascript-sdk";
 
+export type { TreatmentProps, ABSmartlySDK };
+
 export {
-  TreatmentProps,
   mergeConfig,
   Treatment,
   TreatmentVariant,
   useABSmartly,
+  withABSmartly,
 };
 
 export default SDKProvider;

@@ -1,3 +1,3 @@
-import { useABSmartly, SDKProvider } from "./SDKProvider";
+import { withABSmartly, useABSmartly, SDKProvider } from "./SDKProvider";
 
-export { useABSmartly, SDKProvider };
+export { useABSmartly, withABSmartly, SDKProvider };

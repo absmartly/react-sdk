@@ -1,3 +1,5 @@
+import absmartly from "@absmartly/javascript-sdk";
+
 export type ProdOrDevType = "production" | "development";
 
 export type SDKOptionsType = {
@@ -8,6 +10,8 @@ export type SDKOptionsType = {
   retries?: number;
   timeout?: number;
 };
+
+export type ABSmartlySDK = typeof absmartly.SDK;
 
 export type TreatmentProps = {
   variant: number;
