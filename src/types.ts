@@ -9,6 +9,11 @@ export type SDKOptionsType = {
   application: string;
   retries?: number;
   timeout?: number;
+  eventLogger?: (
+    context: typeof absmartly.Context,
+    eventName: string,
+    data: any
+  ) => void;
 };
 
 export type ABSmartlySDK = typeof absmartly.SDK;
