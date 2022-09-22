@@ -57,7 +57,7 @@ export const Treatment: FC<TreatmentProps> = ({
         });
       })
       .catch((e: Error) => console.error(e));
-  }, []);
+  }, [context]);
 
   // Set index of chosen variant in state
   useEffect(() => {
