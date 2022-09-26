@@ -11,12 +11,21 @@ export type SDKOptionsType = {
   timeout?: number;
   eventLogger?: (
     context: typeof absmartly.Context,
-    eventName: string,
+    eventName: EventNameType,
     data: any
   ) => void;
 };
 
 export type ABSmartlySDK = typeof absmartly.SDK;
+
+export type EventNameType =
+  | "error"
+  | "ready"
+  | "refresh"
+  | "publish"
+  | "exposure"
+  | "goal"
+  | "finalize";
 
 export type TreatmentProps = {
   variant: number;
