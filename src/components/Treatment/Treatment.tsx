@@ -110,7 +110,7 @@ export const Treatment: FC<TreatmentProps> = ({
       >
         {children(variantVariablesAndLoading)}
       </TreatmentVariant>
-    ) as ReactElement<any, any>;
+    );
   }
 
   // Set index of chosen variant in state
@@ -127,8 +127,9 @@ export const Treatment: FC<TreatmentProps> = ({
 
   // If not a function return only the selected Treatment (Or treatment 0 or loading component)
   return loading && variantVariablesAndLoading.loading
-    ? loading
+    ? (loading as ReactElement)
     : cloneElement(childrenArray[selectedTreatment || 0] as ReactElement, {
+        loading,
         trackOnView,
         context,
         name,
