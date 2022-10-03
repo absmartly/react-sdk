@@ -6,6 +6,10 @@ const config: Config = {
   },
   testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+  modulePaths: ["<rootDir>/src/"],
+  clearMocks: true,
+  coverageDirectory: "coverage",
+  testEnvironment: "jsdom",
 };
 
 export default config;
