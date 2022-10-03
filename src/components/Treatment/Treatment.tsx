@@ -9,20 +9,21 @@ import React, {
 } from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
+import { useIsInViewport } from "../../hooks/useIsInViewport";
 import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
-import { useIsInViewport } from "../../hooks/useIsInViewport";
 
 interface TreatmentProps {
   name: string;
   context: typeof absmartly.Context;
-  loading?: ReactNode;
+  attributes?: Record<string, unknown>;
+  loadingComponent?: ReactNode;
   children?: ReactNode;
   trackOnView?: boolean;
 }
 
 interface TreatmentVariantProps {
-  variant: number | Char;
+  variant: number | Char | undefined;
   name?: string;
   context?: typeof absmartly.Context;
   children?: ReactNode;
@@ -32,21 +33,22 @@ interface TreatmentVariantProps {
 export const Treatment: FC<TreatmentProps> = ({
   children,
   trackOnView = false,
-  loading,
+  loadingComponent,
+  attributes,
   name,
   context,
 }) => {
   // State for storing the chosen variant, variables and whether this data
   // is loading from the server
-  const [variantVariablesAndLoading, setVariantVariablesAndLoading] = useState<{
-    variant: number;
+  const [variantAndVariables, setVariantAndVariables] = useState<{
+    variant: number | undefined;
     variables: Record<string, unknown>;
-    loading: boolean;
   }>({
-    variant: 0,
+    variant: !loadingComponent ? 0 : undefined,
     variables: {},
-    loading: true,
   });
+
+  const [loading, setLoading] = useState<boolean>(!context.isReady());
 
   // The index of the selected variant in the children array
   const [selectedTreatment, setSelectedTreatment] = useState<
@@ -58,6 +60,8 @@ export const Treatment: FC<TreatmentProps> = ({
 
   // Set variant number and variables in state
   useEffect(() => {
+    if (attributes) context.attributes(attributes);
+
     context
       .ready()
       .then(() => {
@@ -73,19 +77,18 @@ export const Treatment: FC<TreatmentProps> = ({
         );
 
         // Setting the state
-        setVariantVariablesAndLoading(
+        setVariantAndVariables(
           !trackOnView
             ? {
                 variant: context.treatment(name),
                 variables: variablesObject,
-                loading: false,
               }
             : {
                 variant: context.peek(name),
                 variables: variablesObject,
-                loading: false,
               }
         );
+        setLoading(false);
       })
       .catch((e: Error) => console.error(e));
   }, [context]);
@@ -106,9 +109,16 @@ export const Treatment: FC<TreatmentProps> = ({
         trackOnView={trackOnView}
         context={context}
         name={name}
-        variant={variantVariablesAndLoading.variant}
+        variant={variantAndVariables.variant}
       >
-        {children(variantVariablesAndLoading)}
+        {loading
+          ? loadingComponent
+            ? loadingComponent
+            : children({ variant: 0, variables: variantAndVariables.variables })
+          : children({
+              variant: variantAndVariables.variant,
+              variables: variantAndVariables.variables,
+            })}
       </TreatmentVariant>
     );
   }
@@ -120,20 +130,21 @@ export const Treatment: FC<TreatmentProps> = ({
       childrenInfo?.filter(
         (item) =>
           convertLetterToNumber(item.variant) ===
-          variantVariablesAndLoading.variant
-      )[0].index
+          (variantAndVariables.variant || 0)
+      )[0]?.index || 0
     );
-  }, [variantVariablesAndLoading]);
+  }, [variantAndVariables]);
 
   // If not a function return only the selected Treatment (Or treatment 0 or loading component)
-  return loading && variantVariablesAndLoading.loading
-    ? (loading as ReactElement)
-    : cloneElement(childrenArray[selectedTreatment || 0] as ReactElement, {
-        loading,
-        trackOnView,
-        context,
-        name,
-      });
+  if (loading) {
+    if (loadingComponent) return loadingComponent as ReactElement;
+    return childrenArray[0] as ReactElement;
+  }
+  return cloneElement(childrenArray[selectedTreatment || 0] as ReactElement, {
+    trackOnView,
+    context,
+    name,
+  });
 };
 
 export const TreatmentVariant: FC<TreatmentVariantProps> = ({
@@ -142,7 +153,8 @@ export const TreatmentVariant: FC<TreatmentVariantProps> = ({
   name,
   trackOnView = false,
 }) => {
-  const ref = useRef<Element>();
+  const ref = useRef<HTMLDivElement>(null);
+
   const visible = useIsInViewport(ref);
 
   useEffect(() => {
@@ -156,9 +168,18 @@ export const TreatmentVariant: FC<TreatmentVariantProps> = ({
 
   return (
     <>
-      {React.Children.map(children, (child) =>
-        cloneElement(child as ReactElement, { ref })
-      )}
+      {React.Children.map(children, (child) => {
+        if (child)
+          return (
+            <div
+              ref={ref}
+              style={{ margin: 0, padding: 0, boxSizing: "border-box" }}
+            >
+              {cloneElement(child as ReactElement)}
+            </div>
+          );
+        return null;
+      })}
     </>
   );
 };

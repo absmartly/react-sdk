@@ -1,6 +1,6 @@
-import { MutableRefObject, useEffect, useMemo, useState } from "react";
+import { ForwardedRef, useEffect, useMemo, useState } from "react";
 
-export const useIsInViewport = (ref: MutableRefObject<Element | undefined>) => {
+export const useIsInViewport = (ref: ForwardedRef<Element | undefined>) => {
   const [isIntersecting, setIsIntersecting] = useState<boolean>(false);
 
   const observer = useMemo(
