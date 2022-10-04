@@ -48,7 +48,7 @@ export const Treatment: FC<TreatmentProps> = ({
     variables: {},
   });
 
-  const [loading, setLoading] = useState<boolean>(!context.isReady());
+  const [loading, setLoading] = useState<boolean>(!context?.isReady());
 
   // The index of the selected variant in the children array
   const [selectedTreatment, setSelectedTreatment] = useState<

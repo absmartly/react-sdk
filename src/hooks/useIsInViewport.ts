@@ -1,17 +1,13 @@
-import { ForwardedRef, useEffect, useMemo, useState } from "react";
+import { ForwardedRef, useEffect, useState } from "react";
 
 export const useIsInViewport = (ref: ForwardedRef<Element | undefined>) => {
   const [isIntersecting, setIsIntersecting] = useState<boolean>(false);
 
-  const observer = useMemo(
-    () =>
-      new IntersectionObserver(([entry]) =>
-        setIsIntersecting(entry.isIntersecting)
-      ),
-    []
-  );
-
   useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) =>
+      setIsIntersecting(entry.isIntersecting)
+    );
+
     if (typeof ref === "function") return;
     const el = ref?.current;
 
@@ -20,7 +16,7 @@ export const useIsInViewport = (ref: ForwardedRef<Element | undefined>) => {
     }
 
     return () => observer.disconnect();
-  }, [ref, observer]);
+  }, []);
 
   return isIntersecting;
 };
