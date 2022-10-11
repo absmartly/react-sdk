@@ -19,7 +19,7 @@ interface TreatmentProps {
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children?: ReactNode;
-  trackOnView?: boolean;
+  triggerOnView?: boolean;
 }
 
 interface TreatmentVariantProps {
@@ -27,12 +27,12 @@ interface TreatmentVariantProps {
   name?: string;
   context?: typeof absmartly.Context;
   children?: ReactNode;
-  trackOnView?: boolean;
+  triggerOnView?: boolean;
 }
 
 export const Treatment: FC<TreatmentProps> = ({
   children,
-  trackOnView = false,
+  triggerOnView = false,
   loadingComponent,
   attributes,
   name,
@@ -78,7 +78,7 @@ export const Treatment: FC<TreatmentProps> = ({
 
         // Setting the state
         setVariantAndVariables(
-          !trackOnView
+          !triggerOnView
             ? {
                 variant: context.treatment(name),
                 variables: variablesObject,
@@ -106,7 +106,7 @@ export const Treatment: FC<TreatmentProps> = ({
   if (typeof children === "function") {
     return (
       <TreatmentVariant
-        trackOnView={trackOnView}
+        triggerOnView={triggerOnView}
         context={context}
         name={name}
         variant={variantAndVariables.variant}
@@ -141,7 +141,7 @@ export const Treatment: FC<TreatmentProps> = ({
     return childrenArray[0] as ReactElement;
   }
   return cloneElement(childrenArray[selectedTreatment || 0] as ReactElement, {
-    trackOnView,
+    triggerOnView,
     context,
     name,
   });
@@ -151,20 +151,20 @@ export const TreatmentVariant: FC<TreatmentVariantProps> = ({
   children,
   context,
   name,
-  trackOnView = false,
+  triggerOnView = false,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const visible = useIsInViewport(ref);
 
   useEffect(() => {
-    if (trackOnView && visible) {
+    if (triggerOnView && visible) {
       context
         .ready()
         .then(() => context.treatment(name))
         .catch((e: Error) => console.error(e));
     }
-  }, [trackOnView, visible]);
+  }, [triggerOnView, visible]);
 
   return (
     <>
