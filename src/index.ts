@@ -1,3 +1,5 @@
+import "./IntersectionObserver.js";
+
 import {
   SDKProvider,
   useABSmartly,
