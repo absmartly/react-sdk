@@ -18,7 +18,7 @@ interface TreatmentProps {
   context: typeof absmartly.Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
-  children?: ReactNode;
+  children?: ReactNode | ((props: TreatmentProps) => ReactNode);
   triggerOnView?: boolean;
 }
 
@@ -26,7 +26,7 @@ interface TreatmentVariantProps {
   variant: number | Char | undefined;
   name?: string;
   context?: typeof absmartly.Context;
-  children?: ReactNode;
+  children?: ReactNode | ((props: TreatmentProps) => ReactNode);
   triggerOnView?: boolean;
 }
 
@@ -140,6 +140,7 @@ export const Treatment: FC<TreatmentProps> = ({
     if (loadingComponent) return loadingComponent as ReactElement;
     return childrenArray[0] as ReactElement;
   }
+
   return cloneElement(childrenArray[selectedTreatment || 0] as ReactElement, {
     triggerOnView,
     context,
