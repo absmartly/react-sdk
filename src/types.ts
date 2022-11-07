@@ -28,7 +28,7 @@ export type EventNameType =
   | "finalize";
 
 export type TreatmentProps = {
-  variant: number;
+  variant: number | undefined;
   variables: Record<string, any>;
 };
 

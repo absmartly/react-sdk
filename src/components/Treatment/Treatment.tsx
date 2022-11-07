@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 
+import { TreatmentProps as TreatmentFunctionProps } from "../../types";
 import absmartly from "@absmartly/javascript-sdk";
 import { useIsInViewport } from "../../hooks/useIsInViewport";
 import { Char } from "../../types";
@@ -18,7 +19,7 @@ interface TreatmentProps {
   context: typeof absmartly.Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
-  children?: ReactNode | ((props: TreatmentProps) => ReactNode);
+  children?: ReactNode | ((props: TreatmentFunctionProps) => ReactNode);
   triggerOnView?: boolean;
 }
 
@@ -26,7 +27,7 @@ interface TreatmentVariantProps {
   variant: number | Char | undefined;
   name?: string;
   context?: typeof absmartly.Context;
-  children?: ReactNode | ((props: TreatmentProps) => ReactNode);
+  children?: ReactNode | ((props: TreatmentFunctionProps) => ReactNode);
   triggerOnView?: boolean;
 }
 
