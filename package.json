@@ -1,12 +1,28 @@
 {
-  "name": "react-sdk",
+  "name": "@absmartly/react-sdk",
   "version": "1.0.0",
+  "homepage": "https://github.com/absmartly/react-sdk#README.md",
+  "bugs": "https://github.com/absmartly/react-sdk/issues",
+  "keywords": [
+    "absmartly",
+    "ab-smartly",
+    "a/b-smartly",
+    "ab-testing",
+    "a/b-testing",
+    "split-testing",
+    "ab",
+    "a/b",
+    "cro",
+    "vue",
+    "vue2"
+  ],
+  "license": "Apache-2.0",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "types": "./lib/esm/index.d.ts",
-  "license": "MIT",
   "scripts": {
     "build": "rm -rf lib && yarn build:esm && yarn build:cjs",
+    "prepack": "yarn -s upgrade && yarn -s build",
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --outDir lib/cjs",
     "dev": "tsc -w",
@@ -34,5 +50,15 @@
   },
   "dependencies": {
     "@absmartly/javascript-sdk": "^1.10.0"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "README.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "package.json",
+    "lib"
+  ]
 }
