@@ -8,10 +8,8 @@ import React, {
   useState,
 } from "react";
 
-import { TreatmentProps as TreatmentFunctionProps } from "../../types";
 import absmartly from "@absmartly/javascript-sdk";
-import { useIsInViewport } from "../../hooks/useIsInViewport";
-import { Char } from "../../types";
+import { Char, TreatmentProps as TreatmentFunctionProps } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
 
 interface TreatmentProps {
@@ -20,7 +18,6 @@ interface TreatmentProps {
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children?: ReactNode | ((props: TreatmentFunctionProps) => ReactNode);
-  triggerOnView?: boolean;
 }
 
 interface TreatmentVariantProps {
@@ -28,12 +25,10 @@ interface TreatmentVariantProps {
   name?: string;
   context?: typeof absmartly.Context;
   children?: ReactNode | ((props: TreatmentFunctionProps) => ReactNode);
-  triggerOnView?: boolean;
 }
 
 export const Treatment: FC<TreatmentProps> = ({
   children,
-  triggerOnView = false,
   loadingComponent,
   attributes,
   name,
@@ -78,17 +73,10 @@ export const Treatment: FC<TreatmentProps> = ({
         );
 
         // Setting the state
-        setVariantAndVariables(
-          !triggerOnView
-            ? {
-                variant: context.treatment(name),
-                variables: variablesObject,
-              }
-            : {
-                variant: context.peek(name),
-                variables: variablesObject,
-              }
-        );
+        setVariantAndVariables({
+          variant: context.treatment(name),
+          variables: variablesObject,
+        });
         setLoading(false);
       })
       .catch((e: Error) => console.error(e));
@@ -107,7 +95,6 @@ export const Treatment: FC<TreatmentProps> = ({
   if (typeof children === "function") {
     return (
       <TreatmentVariant
-        triggerOnView={triggerOnView}
         context={context}
         name={name}
         variant={variantAndVariables.variant}
@@ -143,30 +130,13 @@ export const Treatment: FC<TreatmentProps> = ({
   }
 
   return cloneElement(childrenArray[selectedTreatment || 0] as ReactElement, {
-    triggerOnView,
     context,
     name,
   });
 };
 
-export const TreatmentVariant: FC<TreatmentVariantProps> = ({
-  children,
-  context,
-  name,
-  triggerOnView = false,
-}) => {
+export const TreatmentVariant: FC<TreatmentVariantProps> = ({ children }) => {
   const ref = useRef<HTMLDivElement>(null);
-
-  const visible = useIsInViewport(ref);
-
-  useEffect(() => {
-    if (triggerOnView && visible) {
-      context
-        .ready()
-        .then(() => context.treatment(name))
-        .catch((e: Error) => console.error(e));
-    }
-  }, [triggerOnView, visible]);
 
   return (
     <>

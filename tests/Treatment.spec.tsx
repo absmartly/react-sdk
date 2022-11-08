@@ -18,14 +18,7 @@ const mocks = {
     variableKeys: jest.fn().mockReturnValue({ "button.color": "red" }),
     peekVariableValue: jest.fn(),
   },
-  IntersectionObserver: jest.fn().mockReturnValue({
-    unobserve: () => null,
-    observe: () => null,
-    disconnect: () => null,
-  }),
 };
-
-window.IntersectionObserver = mocks.IntersectionObserver;
 
 describe("Treatment Component (TreatmentVariants as children)", () => {
   it("should not render loading component when ready", async () => {
