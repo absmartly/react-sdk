@@ -60,7 +60,7 @@ export const Treatment: FC<TreatmentProps> = ({
 
     context
       .ready()
-      .then(() => {
+      .then(async () => {
         //Turning the variable keys and values into an array of arrays
         const variablesArray = Object.keys(context.variableKeys()).map(
           (key) => [key, context.peekVariableValue(key)]
@@ -72,11 +72,18 @@ export const Treatment: FC<TreatmentProps> = ({
           {}
         );
 
+        const treatment = await context.treatment(name);
+
         // Setting the state
         setVariantAndVariables({
-          variant: context.treatment(name),
+          variant: treatment,
           variables: variablesObject,
         });
+        setSelectedTreatment(
+          childrenInfo?.filter(
+            (item) => convertLetterToNumber(item.variant) === (treatment || 0)
+          )[0]?.index || 0
+        );
         setLoading(false);
       })
       .catch((e: Error) => console.error(e));
@@ -110,18 +117,6 @@ export const Treatment: FC<TreatmentProps> = ({
       </TreatmentVariant>
     );
   }
-
-  // Set index of chosen variant in state
-  // Must be done after function check or gives "index is undefined"
-  useEffect(() => {
-    setSelectedTreatment(
-      childrenInfo?.filter(
-        (item) =>
-          convertLetterToNumber(item.variant) ===
-          (variantAndVariables.variant || 0)
-      )[0]?.index || 0
-    );
-  }, [variantAndVariables]);
 
   // If not a function return only the selected Treatment (Or treatment 0 or loading component)
   if (loading) {
