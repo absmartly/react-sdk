@@ -10,12 +10,21 @@ import absmartly from "@absmartly/javascript-sdk";
 
 import { ABSmartly, SDKOptionsType } from "../../types";
 
-interface SDKProviderProps {
+type ContextOptionsProps = {
   sdkOptions: SDKOptionsType;
-  contextOptions?: { units: Record<string, any> };
-  contextData?: Record<string, any>[];
+  contextOptions: { units: Record<string, any> };
+  contextData?: never;
   children?: ReactNode;
-}
+};
+
+type ContextDataProps = {
+  sdkOptions: SDKOptionsType;
+  contextOptions?: never;
+  contextData: { experiments: Record<string, any>[] };
+  children?: ReactNode;
+};
+
+type SDKProviderProps = ContextOptionsProps | ContextDataProps;
 
 const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined });
 
@@ -43,18 +52,22 @@ interface WithABSmartlyProps {
   absmartly: ABSmartly;
 }
 
-export function withABSmartly<P extends WithABSmartlyProps>(
-  Component: ComponentType<P>
-) {
-  return function WithABSmartly(
-    props: Pick<P, Exclude<keyof P, keyof WithABSmartlyProps>>
-  ) {
+export function withABSmartly<
+  P extends WithABSmartlyProps = WithABSmartlyProps
+>(Component: ComponentType<P>) {
+  const displayName = Component.displayName || Component.name || "Component";
+
+  const ComponentWithABSmartly = (props: Omit<P, keyof WithABSmartlyProps>) => {
     return (
       <SDK.Consumer>
         {(value) => <Component {...(props as P)} absmartly={value} />}
       </SDK.Consumer>
     );
   };
+
+  ComponentWithABSmartly.displayName = `withABSmartly(${displayName})`;
+
+  return ComponentWithABSmartly;
 }
 
 export const useABSmartly = () => useContext(SDK);
