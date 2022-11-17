@@ -16,6 +16,8 @@ export type SDKOptionsType = {
   ) => void;
 };
 
+export type ABSmartlyContext = typeof absmartly.Context;
+
 export type ABSmartlySDK = typeof absmartly.SDK;
 
 export type EventNameType =
