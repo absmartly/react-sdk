@@ -9,7 +9,7 @@ import React, {
 } from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
-import { Char, TreatmentProps as TreatmentFunctionProps } from "../../types";
+import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
 
 interface TreatmentProps {
@@ -17,17 +17,28 @@ interface TreatmentProps {
   context: typeof absmartly.Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
-  children?: ReactNode | ((props: TreatmentFunctionProps) => ReactNode);
+  children?: ReactNode;
+}
+
+interface TreatmentFunctionProps {
+  name: string;
+  context: typeof absmartly.Context;
+  attributes?: Record<string, unknown>;
+  loadingComponent?: ReactNode;
+  children(variantAndVariables: {
+    variant: number;
+    variables: Record<string, any>;
+  }): ReactNode | ReactNode;
 }
 
 interface TreatmentVariantProps {
   variant: number | Char | undefined;
   name?: string;
   context?: typeof absmartly.Context;
-  children?: ReactNode | ((props: TreatmentFunctionProps) => ReactNode);
+  children?: ReactNode;
 }
 
-export const Treatment: FC<TreatmentProps> = ({
+export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   children,
   loadingComponent,
   attributes,
@@ -43,16 +54,7 @@ export const Treatment: FC<TreatmentProps> = ({
     variant: !loadingComponent ? 0 : undefined,
     variables: {},
   });
-
   const [loading, setLoading] = useState<boolean>(!context.isReady());
-
-  // The index of the selected variant in the children array
-  const [selectedTreatment, setSelectedTreatment] = useState<
-    number | undefined
-  >();
-
-  // Making the children prop into an array for selecting a single element later.
-  const childrenArray = React.Children.toArray(children);
 
   // Set variant number and variables in state
   useEffect(() => {
@@ -79,6 +81,56 @@ export const Treatment: FC<TreatmentProps> = ({
           variant: treatment,
           variables: variablesObject,
         });
+        setLoading(false);
+      })
+      .catch((e: Error) => console.error(e));
+  }, [context]);
+
+  return (
+    <TreatmentVariant
+      context={context}
+      name={name}
+      variant={variantAndVariables.variant}
+    >
+      {loading
+        ? loadingComponent
+          ? loadingComponent
+          : children({ variant: 0, variables: variantAndVariables.variables })
+        : children({
+            variant: variantAndVariables.variant || 0,
+            variables: variantAndVariables.variables,
+          })}
+    </TreatmentVariant>
+  );
+};
+
+export const Treatment: FC<TreatmentProps> = ({
+  children,
+  loadingComponent,
+  attributes,
+  name,
+  context,
+}) => {
+  const [loading, setLoading] = useState<boolean>(!context.isReady());
+
+  // The index of the selected variant in the children array
+  const [selectedTreatment, setSelectedTreatment] = useState<
+    number | undefined
+  >();
+
+  // Making the children prop into an array for selecting a single element later.
+  const childrenArray = React.Children.toArray(children);
+
+  // Set variant number and variables in state
+  useEffect(() => {
+    if (attributes) context.attributes(attributes);
+
+    context
+      .ready()
+      .then(async () => {
+        const treatment = await context.treatment(name);
+
+        // Setting the state
         setSelectedTreatment(
           childrenInfo?.filter(
             (item) => convertLetterToNumber(item.variant) === (treatment || 0)
@@ -97,26 +149,6 @@ export const Treatment: FC<TreatmentProps> = ({
     };
     return { variant: obj.props.variant, index: i };
   });
-
-  // Return a function with variant number, variables and loading
-  if (typeof children === "function") {
-    return (
-      <TreatmentVariant
-        context={context}
-        name={name}
-        variant={variantAndVariables.variant}
-      >
-        {loading
-          ? loadingComponent
-            ? loadingComponent
-            : children({ variant: 0, variables: variantAndVariables.variables })
-          : children({
-              variant: variantAndVariables.variant,
-              variables: variantAndVariables.variables,
-            })}
-      </TreatmentVariant>
-    );
-  }
 
   // If not a function return only the selected Treatment (Or treatment 0 or loading component)
   if (loading) {
