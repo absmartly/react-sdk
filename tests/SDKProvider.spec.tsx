@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render } from "@testing-library/react";
+import { render, renderHook } from "@testing-library/react";
 
 import { Context, SDK } from "@absmartly/javascript-sdk";
 
@@ -33,7 +33,7 @@ describe("SDKProvider", () => {
   };
 
   const data = {
-    test: 2,
+    experiments: [],
   };
 
   const attrs = {
@@ -46,7 +46,7 @@ describe("SDKProvider", () => {
   };
 
   const sdkOptions = {
-    endpoint: "sandbox.absmartly.com",
+    endpoint: "https://sandbox.absmartly.io/v1",
     apiKey: "salkjdhclkjsdbca",
     application: "www",
     environment: "Environment 5",
@@ -58,30 +58,52 @@ describe("SDKProvider", () => {
     context: context,
   };
 
-  const CreateContextComponent = () => {
-    const sdk = useABSmartly();
-    sdk.createContext();
-
-    return <TestComponent />;
+  const contextOptions = {
+    units: {
+      user_id: "sdchjbaiclrbkj",
+      anonymous_id: "sdchjbaiclrbkj",
+    },
   };
 
-  test("Whether it creates an instance of the ABSmartly JS-SDK", async () => {
-    render(<SDKProvider sdkOptions={sdkOptions} />);
-
-    expect(SDK).toBeCalledTimes(1);
-    expect(SDK).toHaveBeenLastCalledWith(sdkOptions);
-  });
-
-  test("Whether a context is created with default options", async () => {
+  test("Whether it creates an instance of the ABSmartly JS-SDK and an ABSmartly Context", async () => {
     render(
-      <SDKProvider sdkOptions={sdkOptions}>
-        <CreateContextComponent />
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <TestComponent />
       </SDKProvider>
     );
 
     expect(SDK).toBeCalledTimes(1);
     expect(SDK).toHaveBeenLastCalledWith(sdkOptions);
+
     expect(mockCreateContext).toBeCalledTimes(1);
-    expect(mockCreateContext).toBeCalledWith();
+    expect(mockCreateContext).toHaveBeenLastCalledWith(contextOptions);
+  });
+
+  test("Whether it will create an SDK instance with a context that has prefetched context data", async () => {
+    render(
+      <SDKProvider
+        sdkOptions={sdkOptions}
+        contextData={data}
+        contextOptions={contextOptions}
+      >
+        <TestComponent />
+      </SDKProvider>
+    );
+
+    expect(SDK).toBeCalledTimes(1);
+    expect(SDK).toHaveBeenLastCalledWith(sdkOptions);
+
+    expect(mockCreateContextWith).toBeCalledTimes(1);
+    expect(mockCreateContextWith).toHaveBeenLastCalledWith(
+      contextOptions,
+      data
+    );
+  });
+
+  test("Whether useABSmartly hook works", async () => {
+    const { result } = renderHook(() => useABSmartly());
+
+    expect(result.current.context).toBeUndefined();
+    expect(result.current.sdk).toBeUndefined();
   });
 });
