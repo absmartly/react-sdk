@@ -8,41 +8,57 @@ import React, {
 
 import absmartly from "@absmartly/javascript-sdk";
 
-import { SDKOptionsType } from "../../types";
+import { ABSmartly, SDKOptionsType } from "../../types";
 
-interface SDKProviderProps {
+type SDKProviderProps = {
   sdkOptions: SDKOptionsType;
+  contextOptions: Record<string, any>;
+  contextData?: Record<string, any>;
   children?: ReactNode;
-}
+};
 
-const SDK = createContext<typeof absmartly.SDK | undefined>(undefined);
+const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined });
 
-export const SDKProvider: FC<SDKProviderProps> = ({ sdkOptions, children }) => {
-  return (
-    <SDK.Provider
-      value={new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions })}
-    >
-      {children}
-    </SDK.Provider>
-  );
+export const SDKProvider: FC<SDKProviderProps> = ({
+  sdkOptions,
+  contextData,
+  contextOptions,
+  children,
+}) => {
+  const sdk = new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
+
+  const context = contextData
+    ? sdk.createContextWith(contextOptions, contextData)
+    : sdk.createContext(contextOptions);
+
+  const value: ABSmartly = {
+    sdk,
+    context,
+  };
+
+  return <SDK.Provider value={value}>{children}</SDK.Provider>;
 };
 
 interface WithABSmartlyProps {
-  sdk: typeof absmartly.SDK;
+  absmartly: ABSmartly;
 }
 
-export function withABSmartly<P extends WithABSmartlyProps>(
-  Component: ComponentType<P>
-) {
-  return function WithABSmartly(
-    props: Pick<P, Exclude<keyof P, keyof WithABSmartlyProps>>
-  ) {
+export function withABSmartly<
+  P extends WithABSmartlyProps = WithABSmartlyProps
+>(Component: ComponentType<P>) {
+  const displayName = Component.displayName || Component.name || "Component";
+
+  const ComponentWithABSmartly = (props: Omit<P, keyof WithABSmartlyProps>) => {
     return (
       <SDK.Consumer>
-        {(value) => <Component {...(props as P)} sdk={value} />}
+        {(value) => <Component {...(props as P)} absmartly={value} />}
       </SDK.Consumer>
     );
   };
+
+  ComponentWithABSmartly.displayName = `withABSmartly(${displayName})`;
+
+  return ComponentWithABSmartly;
 }
 
 export const useABSmartly = () => useContext(SDK);

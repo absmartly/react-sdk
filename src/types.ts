@@ -16,7 +16,14 @@ export type SDKOptionsType = {
   ) => void;
 };
 
+export type ABSmartlyContext = typeof absmartly.Context;
+
 export type ABSmartlySDK = typeof absmartly.SDK;
+
+export type ABSmartly = {
+  sdk: ABSmartlySDK;
+  context: ABSmartlyContext;
+};
 
 export type EventNameType =
   | "error"

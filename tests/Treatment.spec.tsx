@@ -1,7 +1,11 @@
 import React from "react";
 import { cleanup, render, waitFor } from "@testing-library/react";
 
-import { Treatment, TreatmentVariant } from "../src/components/Treatment";
+import {
+  Treatment,
+  TreatmentFunction,
+  TreatmentVariant,
+} from "../src/components/Treatment";
 import { Char, TreatmentProps } from "../src/types";
 
 jest.mock("@absmartly/javascript-sdk");
@@ -250,7 +254,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   });
 });
 
-describe("Treatment Component (Function as children)", () => {
+describe("TreatmentFunction Component", () => {
   it("should not render loading component when ready", async () => {
     const TestComponent0 = jest.fn();
     const TestComponent1 = jest.fn();
@@ -267,7 +271,7 @@ describe("Treatment Component (Function as children)", () => {
     mocks.context.ready.mockResolvedValue(true);
 
     render(
-      <Treatment
+      <TreatmentFunction
         context={mocks.context}
         name="test_exp"
         attributes={attributes}
@@ -282,7 +286,7 @@ describe("Treatment Component (Function as children)", () => {
             <TestComponent2 />
           )
         }
-      </Treatment>
+      </TreatmentFunction>
     );
 
     await waitFor(() => {
@@ -307,13 +311,13 @@ describe("Treatment Component (Function as children)", () => {
     mocks.context.ready.mockReturnValue(ready);
 
     render(
-      <Treatment
+      <TreatmentFunction
         loadingComponent={<TestLoadingComponent />}
         context={mocks.context}
         name="test_exp"
       >
         {({ variant }: TreatmentProps) => variant === 0 && <TestComponent />}
-      </Treatment>
+      </TreatmentFunction>
     );
 
     await waitFor(() => {
@@ -360,7 +364,7 @@ describe("Treatment Component (Function as children)", () => {
     };
 
     render(
-      <Treatment context={mocks.context} name="test_exp">
+      <TreatmentFunction context={mocks.context} name="test_exp">
         {({ variant }: TreatmentProps) =>
           variant === 0 ? (
             <TestComponent />
@@ -368,7 +372,7 @@ describe("Treatment Component (Function as children)", () => {
             <TestComponentThatShouldntRender />
           )
         }
-      </Treatment>
+      </TreatmentFunction>
     );
 
     expect(mocks.context.treatment).not.toHaveBeenCalled();
@@ -418,7 +422,7 @@ describe("Treatment Component (Function as children)", () => {
       mocks.context.experimentConfig.mockReturnValue(config);
 
       render(
-        <Treatment
+        <TreatmentFunction
           loadingComponent={<TestLoadingComponent />}
           context={mocks.context}
           name="test_exp"
@@ -426,7 +430,7 @@ describe("Treatment Component (Function as children)", () => {
           {(choices: TreatmentProps) =>
             variant === choices.variant && <TestComponent />
           }
-        </Treatment>
+        </TreatmentFunction>
       );
 
       await waitFor(() => {
