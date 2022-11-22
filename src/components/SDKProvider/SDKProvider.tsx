@@ -10,21 +10,12 @@ import absmartly from "@absmartly/javascript-sdk";
 
 import { ABSmartly, SDKOptionsType } from "../../types";
 
-type ContextOptionsProps = {
+type SDKProviderProps = {
   sdkOptions: SDKOptionsType;
-  contextOptions: { units: Record<string, any> };
-  contextData?: never;
+  contextOptions: Record<string, any>;
+  contextData?: Record<string, any>;
   children?: ReactNode;
 };
-
-type ContextDataProps = {
-  sdkOptions: SDKOptionsType;
-  contextOptions?: never;
-  contextData: { experiments: Record<string, any>[] };
-  children?: ReactNode;
-};
-
-type SDKProviderProps = ContextOptionsProps | ContextDataProps;
 
 const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined });
 
@@ -37,7 +28,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
   const sdk = new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
 
   const context = contextData
-    ? sdk.createContextWith(contextData)
+    ? sdk.createContextWith(contextOptions, contextData)
     : sdk.createContext(contextOptions);
 
   const value: ABSmartly = {
