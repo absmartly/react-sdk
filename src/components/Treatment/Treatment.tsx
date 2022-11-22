@@ -54,7 +54,9 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     variant: !loadingComponent ? 0 : undefined,
     variables: {},
   });
-  const [loading, setLoading] = useState<boolean>(!context.isReady());
+  const [loading, setLoading] = useState<boolean>(
+    context && !context.isReady()
+  );
 
   // Set variant number and variables in state
   useEffect(() => {
@@ -111,7 +113,9 @@ export const Treatment: FC<TreatmentProps> = ({
   name,
   context,
 }) => {
-  const [loading, setLoading] = useState<boolean>(!context.isReady());
+  const [loading, setLoading] = useState<boolean>(
+    context && !context.isReady()
+  );
 
   // The index of the selected variant in the children array
   const [selectedTreatment, setSelectedTreatment] = useState<
@@ -134,8 +138,10 @@ export const Treatment: FC<TreatmentProps> = ({
         setSelectedTreatment(
           childrenInfo?.filter(
             (item) => convertLetterToNumber(item.variant) === (treatment || 0)
-          )[0]?.index || 0
+          )[0]?.index
         );
+      })
+      .then(() => {
         setLoading(false);
       })
       .catch((e: Error) => console.error(e));
@@ -150,7 +156,7 @@ export const Treatment: FC<TreatmentProps> = ({
     return { variant: obj.props.variant, index: i };
   });
 
-  // If not a function return only the selected Treatment (Or treatment 0 or loading component)
+  // Return the selected Treatment (Or treatment 0 or loading component)
   if (loading) {
     if (loadingComponent) return loadingComponent as ReactElement;
     return childrenArray[0] as ReactElement;
