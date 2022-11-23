@@ -81,23 +81,13 @@ describe("SDKProvider", () => {
 
   test("Whether it will create an SDK instance with a context that has prefetched context data", async () => {
     render(
-      <SDKProvider
-        sdkOptions={sdkOptions}
-        contextData={data}
-        contextOptions={contextOptions}
-      >
+      <SDKProvider context={data}>
         <TestComponent />
       </SDKProvider>
     );
 
-    expect(SDK).toBeCalledTimes(1);
-    expect(SDK).toHaveBeenLastCalledWith(sdkOptions);
-
-    expect(mockCreateContextWith).toBeCalledTimes(1);
-    expect(mockCreateContextWith).toHaveBeenLastCalledWith(
-      contextOptions,
-      data
-    );
+    expect(SDK).not.toBeCalled();
+    expect(mockCreateContext).not.toBeCalled();
   });
 
   test("Whether useABSmartly hook works", async () => {
