@@ -8,32 +8,41 @@ import React, {
 
 import absmartly from "@absmartly/javascript-sdk";
 
-import { ABSmartly, SDKOptionsType } from "../../types";
+import { ABSmartly, ABSmartlyContext, SDKOptionsType } from "../../types";
 
-type SDKProviderProps = {
+type SDKProviderNoContext = {
   sdkOptions: SDKOptionsType;
+  context?: never;
   contextOptions: Record<string, any>;
-  contextData?: Record<string, any>;
   children?: ReactNode;
 };
+
+type SDKProviderWithContext = {
+  context: ABSmartlyContext;
+  children?: ReactNode;
+  sdkOptions?: never;
+  contextOptions?: never;
+};
+
+type SDKProviderProps = SDKProviderNoContext | SDKProviderWithContext;
 
 const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined });
 
 export const SDKProvider: FC<SDKProviderProps> = ({
   sdkOptions,
-  contextData,
   contextOptions,
+  context,
   children,
 }) => {
-  const sdk = new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
+  const sdk = context
+    ? context._sdk
+    : new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
 
-  const context = contextData
-    ? sdk.createContextWith(contextOptions, contextData)
-    : sdk.createContext(contextOptions);
+  const providedContext = context ? context : sdk.createContext(contextOptions);
 
   const value: ABSmartly = {
     sdk,
-    context,
+    context: providedContext,
   };
 
   return <SDK.Provider value={value}>{children}</SDK.Provider>;
