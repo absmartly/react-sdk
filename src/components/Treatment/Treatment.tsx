@@ -64,7 +64,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
     context
       .ready()
-      .then(async () => {
+      .then(() => {
         //Turning the variable keys and values into an array of arrays
         const variablesArray = Object.keys(context.variableKeys()).map(
           (key) => [key, context.peekVariableValue(key)]
@@ -76,7 +76,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
           {}
         );
 
-        const treatment = await context.treatment(name);
+        const treatment = context.treatment(name);
 
         // Setting the state
         setVariantAndVariables({
