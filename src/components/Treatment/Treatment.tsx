@@ -131,8 +131,8 @@ export const Treatment: FC<TreatmentProps> = ({
 
     context
       .ready()
-      .then(async () => {
-        const treatment = await context.treatment(name);
+      .then(() => {
+        const treatment = context.treatment(name);
 
         // Setting the state
         setSelectedTreatment(
