@@ -1,73 +1,89 @@
 import React, {
-  ComponentType,
-  createContext,
-  FC,
-  ReactNode,
-  useContext,
+    ComponentType,
+    createContext,
+    FC,
+    ReactNode,
+    useContext,
+    useState,
 } from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
 
-import { ABSmartly, ABSmartlyContext, SDKOptionsType } from "../../types";
+import { ABSmartly, ABSmartlyContext, ContextRequestType, SDKOptionsType } from "../../types";
 
 type SDKProviderNoContext = {
-  sdkOptions: SDKOptionsType;
-  context?: never;
-  contextOptions: Record<string, any>;
-  children?: ReactNode;
+    sdkOptions: SDKOptionsType;
+    context?: never;
+    contextOptions: Record<string, any>;
+    children?: ReactNode;
 };
 
 type SDKProviderWithContext = {
-  context: ABSmartlyContext;
-  children?: ReactNode;
-  sdkOptions?: never;
-  contextOptions?: never;
+    context: ABSmartlyContext;
+    children?: ReactNode;
+    sdkOptions?: never;
+    contextOptions?: never;
 };
 
 type SDKProviderProps = SDKProviderNoContext | SDKProviderWithContext;
 
-const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined });
+const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined, resetContext: () => { } });
 
 export const SDKProvider: FC<SDKProviderProps> = ({
-  sdkOptions,
-  contextOptions,
-  context,
-  children,
+    sdkOptions,
+    contextOptions,
+    context,
+    children,
 }) => {
-  const sdk = context
-    ? context._sdk
-    : new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
+    const sdk = context
+        ? context._sdk
+        : new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
 
-  const providedContext = context ? context : sdk.createContext(contextOptions);
+    const [providedContext, setProvidedContext] = useState(context ? context : sdk.createContext(contextOptions));
 
-  const value: ABSmartly = {
-    sdk,
-    context: providedContext,
-  };
+    const resetContext = async (req: ContextRequestType) => {
+        try {
+            await providedContext.ready()
 
-  return <SDK.Provider value={value}>{children}</SDK.Provider>;
+            const contextData = providedContext.data()
+
+            await providedContext.finalize()
+
+            setProvidedContext(sdk.createContextWith(req, contextData))
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const value: ABSmartly = {
+        sdk,
+        context: providedContext,
+        resetContext
+    };
+
+    return <SDK.Provider value={value}>{children}</SDK.Provider>;
 };
 
 interface WithABSmartlyProps {
-  absmartly: ABSmartly;
+    absmartly: ABSmartly;
 }
 
 export function withABSmartly<
-  P extends WithABSmartlyProps = WithABSmartlyProps
+    P extends WithABSmartlyProps = WithABSmartlyProps
 >(Component: ComponentType<P>) {
-  const displayName = Component.displayName || Component.name || "Component";
+    const displayName = Component.displayName || Component.name || "Component";
 
-  const ComponentWithABSmartly = (props: Omit<P, keyof WithABSmartlyProps>) => {
-    return (
-      <SDK.Consumer>
-        {(value) => <Component {...(props as P)} absmartly={value} />}
-      </SDK.Consumer>
-    );
-  };
+    const ComponentWithABSmartly = (props: Omit<P, keyof WithABSmartlyProps>) => {
+        return (
+            <SDK.Consumer>
+                {(value) => <Component {...(props as P)} absmartly={value} />}
+            </SDK.Consumer>
+        );
+    };
 
-  ComponentWithABSmartly.displayName = `withABSmartly(${displayName})`;
+    ComponentWithABSmartly.displayName = `withABSmartly(${displayName})`;
 
-  return ComponentWithABSmartly;
+    return ComponentWithABSmartly;
 }
 
 export const useABSmartly = () => useContext(SDK);
