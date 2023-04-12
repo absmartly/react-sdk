@@ -28,7 +28,7 @@ export type ABSmartly = {
 
 export type ContextRequestType = { units: Record<string, unknown> };
 
-export type ContextOptionsType = {publishDelay?: number, refreshPeriod?: number};
+export type ContextOptionsType = { publishDelay?: number, refreshPeriod?: number };
 
 export type EventNameType =
     | "error"
