@@ -23,10 +23,12 @@ export type ABSmartlySDK = typeof absmartly.SDK;
 export type ABSmartly = {
     sdk: ABSmartlySDK;
     context: ABSmartlyContext;
-    resetContext: (contextRequest: ContextRequestType) => void
+    resetContext: (contextRequest: ContextRequestType, contextOptions?: ContextOptionsType) => void
 };
 
 export type ContextRequestType = { units: Record<string, unknown> };
+
+export type ContextOptionsType = {publishDelay?: number, refreshPeriod?: number};
 
 export type EventNameType =
     | "error"

@@ -9,7 +9,7 @@ import React, {
 
 import absmartly from "@absmartly/javascript-sdk";
 
-import { ABSmartly, ABSmartlyContext, ContextRequestType, SDKOptionsType } from "../../types";
+import { ABSmartly, ABSmartlyContext, ContextOptionsType, ContextRequestType, SDKOptionsType } from "../../types";
 
 type SDKProviderNoContext = {
     sdkOptions: SDKOptionsType;
@@ -41,15 +41,21 @@ export const SDKProvider: FC<SDKProviderProps> = ({
 
     const [providedContext, setProvidedContext] = useState(context ? context : sdk.createContext(contextOptions));
 
-    const resetContext = async (req: ContextRequestType) => {
+    const resetContext = async (params: ContextRequestType, contextOptions: ContextOptionsType) => {
         try {
             await providedContext.ready()
 
             const contextData = providedContext.data()
+            const oldContextOptions = providedContext._opts
+
+            const combinedContextOptions = {
+                ...oldContextOptions,
+                ...contextOptions
+            }
 
             await providedContext.finalize()
 
-            setProvidedContext(sdk.createContextWith(req, contextData))
+            setProvidedContext(sdk.createContextWith(params, contextData, combinedContextOptions))
         } catch (error) {
             console.error(error)
         }
