@@ -163,6 +163,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     "should render treatment component %i by variant (%s)",
     async (variant, component) => {
       const TestComponent = jest.fn();
+      const ControlComponent = jest.fn();
       const TestLoadingComponent = jest.fn();
 
       const config = { a: 1, b: 2 };
@@ -178,7 +179,9 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
           context={mocks.context}
           name="test_exp"
         >
-          <TreatmentVariant variant="Z" />
+          <TreatmentVariant variant="Z">
+            <ControlComponent />
+          </TreatmentVariant>
           <TreatmentVariant variant={component as number | Char}>
             <TestComponent />
           </TreatmentVariant>
@@ -186,6 +189,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       );
 
       await waitFor(() => {
+        expect(ControlComponent).toHaveBeenCalledTimes(0);
         expect(TestComponent).toHaveBeenCalledTimes(1);
       });
     }

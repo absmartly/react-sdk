@@ -117,10 +117,27 @@ export const Treatment: FC<TreatmentProps> = ({
     context && !context.isReady()
   );
 
+  // Turning the children array into objects and mapping them as variants
+  // and indexes
+  const childrenInfo = React.Children.map(children, (child, i) => {
+    const obj = child?.valueOf() as {
+      props: { variant: number | Char };
+    };
+    return { variant: obj.props.variant, index: i };
+  });
+
+  // Get the index of the first child with a variant matching the context treatment
+  const getSelectedChildIndex = (context: typeof absmartly.Context) => {
+    const treatment = context.treatment(name);
+    return childrenInfo?.filter(
+      (item) => convertLetterToNumber(item.variant) === (treatment || 0)
+    )[0]?.index;
+  };
+
   // The index of the selected variant in the children array
   const [selectedTreatment, setSelectedTreatment] = useState<
     number | undefined
-  >();
+  >(() => (context?.isReady() ? getSelectedChildIndex(context) : undefined));
 
   // Making the children prop into an array for selecting a single element later.
   const childrenArray = React.Children.toArray(children);
@@ -132,29 +149,14 @@ export const Treatment: FC<TreatmentProps> = ({
     context
       .ready()
       .then(() => {
-        const treatment = context.treatment(name);
-
         // Setting the state
-        setSelectedTreatment(
-          childrenInfo?.filter(
-            (item) => convertLetterToNumber(item.variant) === (treatment || 0)
-          )[0]?.index
-        );
+        setSelectedTreatment(getSelectedChildIndex(context));
       })
       .then(() => {
         setLoading(false);
       })
       .catch((e: Error) => console.error(e));
   }, [context]);
-
-  // Turning the children array into objects and mapping them as variants
-  // and indexes
-  const childrenInfo = React.Children.map(children, (child, i) => {
-    const obj = child?.valueOf() as {
-      props: { variant: number | Char };
-    };
-    return { variant: obj.props.variant, index: i };
-  });
 
   // Return the selected Treatment (Or treatment 0 or loading component)
   if (loading) {
