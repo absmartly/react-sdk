@@ -1,27 +1,28 @@
 import React from "react";
 import { cleanup, render, waitFor } from "@testing-library/react";
 
-import {
-  Treatment,
-  TreatmentFunction,
-  TreatmentVariant,
-} from "../src/components/Treatment";
+import { Treatment, TreatmentFunction, TreatmentVariant } from "../src";
 import { Char, TreatmentProps } from "../src/types";
+import { Context } from "@absmartly/javascript-sdk";
 
 jest.mock("@absmartly/javascript-sdk");
 
+const baseMockContext: Partial<InstanceType<typeof Context>> = {
+  treatment: jest.fn().mockReturnValue(1),
+  attributes: jest.fn(),
+  ready: jest.fn().mockResolvedValue(true),
+  isReady: jest.fn().mockReturnValue(true),
+  isFailed: jest.fn().mockReturnValue(false),
+  variableKeys: jest.fn().mockReturnValue({ "button.color": "red" }),
+  peekVariableValue: jest.fn(),
+};
+
+const mockContext = baseMockContext as InstanceType<typeof Context>;
+
 afterEach(cleanup);
+
 const mocks = {
-  context: {
-    treatment: jest.fn(),
-    experimentConfig: jest.fn(),
-    attributes: jest.fn(),
-    ready: jest.fn(),
-    isReady: jest.fn(),
-    isFailed: jest.fn(),
-    variableKeys: jest.fn().mockReturnValue({ "button.color": "red" }),
-    peekVariableValue: jest.fn(),
-  },
+  context: mockContext,
 };
 
 describe("Treatment Component (TreatmentVariants as children)", () => {
@@ -29,14 +30,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     const TestComponent = jest.fn();
     const TestLoadingComponent = jest.fn();
 
-    const config = { a: 1, b: 2 };
     const attributes = { attr1: 15, attr2: 50 };
-
-    mocks.context.isReady.mockReturnValue(true);
-    mocks.context.isFailed.mockReturnValue(false);
-    mocks.context.treatment.mockReturnValue(1);
-    mocks.context.experimentConfig.mockReturnValue(config);
-    mocks.context.ready.mockResolvedValue(true);
 
     render(
       <Treatment
@@ -71,14 +65,16 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     const TestLoadingComponent = jest.fn();
     const TestTreatmentVariant = jest.fn();
 
-    mocks.context.isReady.mockReturnValue(false);
-    mocks.context.isFailed.mockReturnValue(false);
-
-    mocks.context.ready.mockResolvedValue(true);
+    const context = {
+      ...mocks.context,
+      ready: jest.fn().mockResolvedValue(true),
+      isReady: jest.fn().mockReturnValue(false),
+      isFailed: jest.fn().mockReturnValue(false),
+    } as unknown as InstanceType<typeof Context>;
 
     render(
       <Treatment
-        context={mocks.context}
+        context={context}
         name="test_exp"
         loadingComponent={<TestLoadingComponent />}
       >
@@ -89,9 +85,8 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.context.treatment).not.toHaveBeenCalled();
-      expect(mocks.context.experimentConfig).not.toHaveBeenCalled();
-      expect(mocks.context.attributes).not.toHaveBeenCalled();
+      expect(context.treatment).not.toHaveBeenCalled();
+      expect(context.attributes).not.toHaveBeenCalled();
       expect(TestTreatmentVariant).not.toHaveBeenCalled();
       expect(TestLoadingComponent).toHaveBeenCalledTimes(1);
     });
@@ -100,11 +95,14 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   it("Should render control variant when no loading component is provided", async () => {
     const TestComponent = jest.fn();
 
-    mocks.context.isReady.mockReturnValue(false);
-    mocks.context.isFailed.mockReturnValue(false);
-
     const ready = Promise.resolve(true);
-    mocks.context.ready.mockReturnValue(ready);
+
+    const context = {
+      ...mocks.context,
+      ready: jest.fn().mockReturnValue(ready),
+      isReady: jest.fn().mockReturnValue(false),
+      isFailed: jest.fn().mockReturnValue(false),
+    } as unknown as InstanceType<typeof Context>;
 
     const attributes = {
       attr1: 15,
@@ -112,7 +110,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     };
 
     render(
-      <Treatment context={mocks.context} name="test_exp">
+      <Treatment context={context} name="test_exp">
         <TestComponent variant="0">
           <p>Hello World 0!</p>
         </TestComponent>
@@ -122,32 +120,32 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       </Treatment>
     );
 
-    expect(mocks.context.treatment).not.toHaveBeenCalled();
-    expect(mocks.context.experimentConfig).not.toHaveBeenCalled();
-    expect(mocks.context.attributes).not.toHaveBeenCalled();
+    expect(context.treatment).not.toHaveBeenCalled();
+    expect(context.attributes).not.toHaveBeenCalled();
     expect(TestComponent).toHaveBeenCalledTimes(1);
 
     await waitFor(() => {
       TestComponent.mockClear();
     });
 
-    const config = { a: 1, b: 2 };
-    mocks.context.isReady.mockReturnValue(true);
-    mocks.context.treatment.mockReturnValue(1);
-    mocks.context.experimentConfig.mockReturnValue(config);
+    const context2 = {
+      ...context,
+      isReady: jest.fn().mockReturnValue(true),
+      treatment: jest.fn().mockReturnValue(1),
+      attributes: jest.fn().mockReturnValue(attributes),
+    };
 
     ready.then(async () => {
       await waitFor(() => {
-        expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
-        expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
-        expect(mocks.context.attributes).toHaveBeenCalledTimes(1);
-        expect(mocks.context.attributes).toHaveBeenCalledWith(attributes);
+        expect(context2.treatment).toHaveBeenCalledTimes(1);
+        expect(context2.treatment).toHaveBeenCalledWith("test_exp");
+        expect(context2.attributes).toHaveBeenCalledTimes(1);
+        expect(context2.attributes).toHaveBeenCalledWith(attributes);
         expect(TestComponent).toHaveBeenCalledTimes(1);
         expect(TestComponent).toHaveBeenCalledWith({
           ready: true,
           failed: false,
           treatment: 1,
-          config,
         });
       });
     });
@@ -166,17 +164,17 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       const ControlComponent = jest.fn();
       const TestLoadingComponent = jest.fn();
 
-      const config = { a: 1, b: 2 };
-
-      mocks.context.isReady.mockReturnValue(true);
-      mocks.context.isFailed.mockReturnValue(false);
-      mocks.context.treatment.mockReturnValue(variant);
-      mocks.context.experimentConfig.mockReturnValue(config);
+      const context = {
+        ...mocks.context,
+        isReady: jest.fn().mockReturnValue(true),
+        isFailed: jest.fn().mockReturnValue(false),
+        treatment: jest.fn().mockReturnValue(variant),
+      } as unknown as InstanceType<typeof Context>;
 
       render(
         <Treatment
           loadingComponent={<TestLoadingComponent />}
-          context={mocks.context}
+          context={context}
           name="test_exp"
         >
           <TreatmentVariant variant="Z">
@@ -207,17 +205,17 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       const TestComponent = jest.fn();
       const TestLoadingComponent = jest.fn();
 
-      const config = { a: 1, b: 2 };
-
-      mocks.context.isReady.mockReturnValue(true);
-      mocks.context.isFailed.mockReturnValue(false);
-      mocks.context.treatment.mockReturnValue(variant);
-      mocks.context.experimentConfig.mockReturnValue(config);
+      const context = {
+        ...mocks.context,
+        isReady: jest.fn().mockReturnValue(true),
+        isFailed: jest.fn().mockReturnValue(false),
+        treatment: jest.fn().mockReturnValue(variant),
+      } as unknown as InstanceType<typeof Context>;
 
       render(
         <Treatment
           loadingComponent={<TestLoadingComponent />}
-          context={mocks.context}
+          context={context}
           name="test_exp"
         >
           <TreatmentVariant variant="Z" />
@@ -235,13 +233,15 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
 
   it("should not call context.attributes with no attribute property", async () => {
     const TestComponent = jest.fn();
-    mocks.context.isReady.mockReturnValue(true);
-    mocks.context.isFailed.mockReturnValue(false);
-    mocks.context.treatment.mockReturnValue(1);
-    mocks.context.experimentConfig.mockReturnValue({});
+    const context = {
+      ...mocks.context,
+      isReady: jest.fn().mockReturnValue(true),
+      isFailed: jest.fn().mockReturnValue(false),
+      treatment: jest.fn().mockReturnValue(1),
+    } as unknown as InstanceType<typeof Context>;
 
     render(
-      <Treatment context={mocks.context} name="test_exp">
+      <Treatment context={context} name="test_exp">
         <TreatmentVariant variant="0"></TreatmentVariant>
         <TreatmentVariant variant="1">
           <TestComponent></TestComponent>
@@ -250,9 +250,9 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
-      expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
-      expect(mocks.context.attributes).not.toHaveBeenCalledWith();
+      expect(context.treatment).toHaveBeenCalledTimes(1);
+      expect(context.treatment).toHaveBeenCalledWith("test_exp");
+      expect(context.attributes).not.toHaveBeenCalledWith();
       expect(TestComponent).toHaveBeenCalledTimes(1);
     });
   });
@@ -265,18 +265,19 @@ describe("TreatmentFunction Component", () => {
     const TestComponent2 = jest.fn();
     const TestLoadingComponent = jest.fn();
 
-    const config = { a: 1, b: 2 };
     const attributes = { attr1: 15, attr2: 50 };
 
-    mocks.context.isReady.mockReturnValue(true);
-    mocks.context.isFailed.mockReturnValue(false);
-    mocks.context.treatment.mockReturnValue(1);
-    mocks.context.experimentConfig.mockReturnValue(config);
-    mocks.context.ready.mockResolvedValue(true);
+    const context = {
+      ...mocks.context,
+      isReady: jest.fn().mockReturnValue(true),
+      isFailed: jest.fn().mockReturnValue(false),
+      treatment: jest.fn().mockReturnValue(1),
+      ready: jest.fn().mockResolvedValue(true),
+    } as unknown as InstanceType<typeof Context>;
 
     render(
       <TreatmentFunction
-        context={mocks.context}
+        context={context}
         name="test_exp"
         attributes={attributes}
         loadingComponent={<TestLoadingComponent />}
@@ -294,10 +295,10 @@ describe("TreatmentFunction Component", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
-      expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
-      expect(mocks.context.attributes).toHaveBeenCalledTimes(1);
-      expect(mocks.context.attributes).toHaveBeenCalledWith(attributes);
+      expect(context.treatment).toHaveBeenCalledTimes(1);
+      expect(context.treatment).toHaveBeenCalledWith("test_exp");
+      expect(context.attributes).toHaveBeenCalledTimes(1);
+      expect(context.attributes).toHaveBeenCalledWith(attributes);
       expect(TestLoadingComponent).not.toHaveBeenCalled();
       expect(TestComponent1).toHaveBeenCalledTimes(1);
     });
@@ -307,17 +308,19 @@ describe("TreatmentFunction Component", () => {
     const TestLoadingComponent = jest.fn();
     const TestComponent = jest.fn();
 
-    mocks.context.isReady.mockReturnValue(false);
-    mocks.context.isFailed.mockReturnValue(false);
-
     const ready = Promise.resolve(true);
 
-    mocks.context.ready.mockReturnValue(ready);
+    const context = {
+      ...mocks.context,
+      isReady: jest.fn().mockReturnValue(false),
+      isFailed: jest.fn().mockReturnValue(false),
+      ready: jest.fn().mockReturnValue(ready),
+    } as unknown as InstanceType<typeof Context>;
 
     render(
       <TreatmentFunction
         loadingComponent={<TestLoadingComponent />}
-        context={mocks.context}
+        context={context}
         name="test_exp"
       >
         {({ variant }: TreatmentProps) => variant === 0 && <TestComponent />}
@@ -325,28 +328,21 @@ describe("TreatmentFunction Component", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.context.treatment).not.toHaveBeenCalled();
-      expect(mocks.context.experimentConfig).not.toHaveBeenCalled();
-      expect(mocks.context.attributes).not.toHaveBeenCalled();
+      expect(context.treatment).not.toHaveBeenCalled();
+      expect(context.attributes).not.toHaveBeenCalled();
       expect(TestComponent).not.toHaveBeenCalled();
       expect(TestLoadingComponent).toHaveBeenCalledTimes(1);
     });
 
-    const config = { a: 1, b: 2 };
-    mocks.context.isReady.mockReturnValue(true);
-    mocks.context.treatment.mockReturnValue(1);
-    mocks.context.experimentConfig.mockReturnValue(config);
-
     ready.then(async () => {
       await waitFor(() => {
-        expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
-        expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
+        expect(context.treatment).toHaveBeenCalledTimes(1);
+        expect(context.treatment).toHaveBeenCalledWith("test_exp");
         expect(TestComponent).toHaveBeenCalledTimes(1);
         expect(TestComponent).toHaveBeenCalledWith({
           ready: true,
           failed: false,
           treatment: 1,
-          config,
         });
       });
     });
@@ -356,11 +352,14 @@ describe("TreatmentFunction Component", () => {
     const TestComponent = jest.fn();
     const TestComponentThatShouldntRender = jest.fn();
 
-    mocks.context.isReady.mockReturnValue(false);
-    mocks.context.isFailed.mockReturnValue(false);
-
     const ready = Promise.resolve(true);
-    mocks.context.ready.mockReturnValue(ready);
+
+    const context = {
+      ...mocks.context,
+      isReady: jest.fn().mockReturnValue(false),
+      isFailed: jest.fn().mockReturnValue(false),
+      ready: jest.fn().mockReturnValue(ready),
+    } as unknown as InstanceType<typeof Context>;
 
     const attributes = {
       attr1: 15,
@@ -368,7 +367,7 @@ describe("TreatmentFunction Component", () => {
     };
 
     render(
-      <TreatmentFunction context={mocks.context} name="test_exp">
+      <TreatmentFunction context={context} name="test_exp">
         {({ variant }: TreatmentProps) =>
           variant === 0 ? (
             <TestComponent />
@@ -379,9 +378,8 @@ describe("TreatmentFunction Component", () => {
       </TreatmentFunction>
     );
 
-    expect(mocks.context.treatment).not.toHaveBeenCalled();
-    expect(mocks.context.experimentConfig).not.toHaveBeenCalled();
-    expect(mocks.context.attributes).not.toHaveBeenCalled();
+    expect(context.treatment).not.toHaveBeenCalled();
+    expect(context.attributes).not.toHaveBeenCalled();
     expect(TestComponent).toHaveBeenCalledTimes(1);
     expect(TestComponentThatShouldntRender).not.toHaveBeenCalled();
 
@@ -390,16 +388,13 @@ describe("TreatmentFunction Component", () => {
     });
 
     const config = { a: 1, b: 2 };
-    mocks.context.isReady.mockReturnValue(true);
-    mocks.context.treatment.mockReturnValue(1);
-    mocks.context.experimentConfig.mockReturnValue(config);
 
     ready.then(async () => {
       await waitFor(() => {
-        expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
-        expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
-        expect(mocks.context.attributes).toHaveBeenCalledTimes(1);
-        expect(mocks.context.attributes).toHaveBeenCalledWith(attributes);
+        expect(context.treatment).toHaveBeenCalledTimes(1);
+        expect(context.treatment).toHaveBeenCalledWith("test_exp");
+        expect(context.attributes).toHaveBeenCalledTimes(1);
+        expect(context.attributes).toHaveBeenCalledWith(attributes);
         expect(TestComponent).toHaveBeenCalledTimes(1);
         expect(TestComponent).toHaveBeenCalledWith({
           ready: true,
@@ -418,17 +413,17 @@ describe("TreatmentFunction Component", () => {
       const TestComponent = jest.fn();
       const TestLoadingComponent = jest.fn();
 
-      const config = { a: 1, b: 2 };
-
-      mocks.context.isReady.mockReturnValue(true);
-      mocks.context.isFailed.mockReturnValue(false);
-      mocks.context.treatment.mockReturnValue(variant);
-      mocks.context.experimentConfig.mockReturnValue(config);
+      const context = {
+        ...mocks.context,
+        isReady: jest.fn().mockReturnValue(true),
+        isFailed: jest.fn().mockReturnValue(false),
+        treatment: jest.fn().mockReturnValue(variant),
+      } as unknown as InstanceType<typeof Context>;
 
       render(
         <TreatmentFunction
           loadingComponent={<TestLoadingComponent />}
-          context={mocks.context}
+          context={context}
           name="test_exp"
         >
           {(choices: TreatmentProps) =>

@@ -8,13 +8,13 @@ import React, {
   useState,
 } from "react";
 
-import absmartly from "@absmartly/javascript-sdk";
+import { Context } from "@absmartly/javascript-sdk";
 import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
 
 interface TreatmentProps {
   name: string;
-  context: typeof absmartly.Context;
+  context: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children?: ReactNode;
@@ -22,19 +22,19 @@ interface TreatmentProps {
 
 interface TreatmentFunctionProps {
   name: string;
-  context: typeof absmartly.Context;
+  context: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children(variantAndVariables: {
     variant: number;
     variables: Record<string, any>;
-  }): ReactNode | ReactNode;
+  }): ReactNode;
 }
 
 interface TreatmentVariantProps {
   variant: number | Char | undefined;
   name?: string;
-  context?: typeof absmartly.Context;
+  context?: Context;
   children?: ReactNode;
 }
 
@@ -67,7 +67,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
       .then(() => {
         //Turning the variable keys and values into an array of arrays
         const variablesArray = Object.keys(context.variableKeys()).map(
-          (key) => [key, context.peekVariableValue(key)]
+          (key) => [key, context.peekVariableValue(key, "")]
         );
 
         // Converting the array of arrays into a regular object
@@ -127,7 +127,7 @@ export const Treatment: FC<TreatmentProps> = ({
   });
 
   // Get the index of the first child with a variant matching the context treatment
-  const getSelectedChildIndex = (context: typeof absmartly.Context) => {
+  const getSelectedChildIndex = (context: Context) => {
     const treatment = context.treatment(name);
     return childrenInfo?.filter(
       (item) => convertLetterToNumber(item.variant) === (treatment || 0)

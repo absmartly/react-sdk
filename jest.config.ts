@@ -10,6 +10,7 @@ const config: Config = {
   clearMocks: true,
   coverageDirectory: "coverage",
   testEnvironment: "jsdom",
+  testPathIgnorePatterns: ["<rootDir>/example/"],
 };
 
 export default config;
