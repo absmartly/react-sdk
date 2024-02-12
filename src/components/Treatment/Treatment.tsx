@@ -4,7 +4,6 @@ import React, {
   ReactElement,
   ReactNode,
   useEffect,
-  useRef,
   useState,
 } from "react";
 
@@ -171,20 +170,11 @@ export const Treatment: FC<TreatmentProps> = ({
 };
 
 export const TreatmentVariant: FC<TreatmentVariantProps> = ({ children }) => {
-  const ref = useRef<HTMLDivElement>(null);
-
   return (
     <>
       {React.Children.map(children, (child) => {
         if (child)
-          return (
-            <div
-              ref={ref}
-              style={{ margin: 0, padding: 0, boxSizing: "border-box" }}
-            >
-              {cloneElement(child as ReactElement)}
-            </div>
-          );
+          return cloneElement(child as ReactElement)
         return null;
       })}
     </>
