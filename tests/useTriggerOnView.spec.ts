@@ -1,9 +1,9 @@
 import { useTriggerOnView } from "../src/hooks/useTriggerOnView";
 import "@testing-library/jest-dom";
-import absmartly from "@absmartly/javascript-sdk";
+import absmartly, { Context } from "@absmartly/javascript-sdk";
 import { renderHook } from "@testing-library/react";
 
-// @ts-ignore
+// @ts-expect-error
 global.IntersectionObserver = class IntersectionObserver {
   private entries: any[];
   private readonly callback: any;
@@ -24,13 +24,13 @@ global.IntersectionObserver = class IntersectionObserver {
 };
 
 describe("useTriggerOnView", () => {
-  let contextMock: { treatment: jest.Mock };
+  let contextMock: Context;
   const name = "test_exp";
 
   beforeEach(() => {
     contextMock = {
       treatment: jest.fn(),
-    };
+    } as unknown as Context;
     jest.spyOn(absmartly, "Context").mockImplementation(() => contextMock);
   });
 
@@ -41,7 +41,7 @@ describe("useTriggerOnView", () => {
         context: contextMock,
         enabled: true,
         name,
-      })
+      }),
     );
 
     expect(contextMock.treatment).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe("useTriggerOnView", () => {
         context: contextMock,
         enabled: false,
         name,
-      })
+      }),
     );
 
     expect(contextMock.treatment).not.toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe("useTriggerOnView", () => {
         enabled: true,
         name,
         options: {},
-      })
+      }),
     );
 
     // @ts-expect-error
@@ -76,6 +76,7 @@ describe("useTriggerOnView", () => {
     rerender();
 
     expect(contextMock.treatment).toHaveBeenCalledWith(name);
+    expect(contextMock.treatment).toHaveBeenCalledTimes(1);
 
     unmount();
   });

@@ -1,9 +1,11 @@
-import absmartly from "@absmartly/javascript-sdk";
+require("../polyfills/intersectionObserver.js");
+
+import { Context } from "@absmartly/javascript-sdk";
 import { useEffect, useRef } from "react";
 
 interface UseTriggerOnViewProps {
   ready: boolean;
-  context: typeof absmartly.Context;
+  context: Context;
   enabled: boolean;
   options?: IntersectionObserverInit;
   name: string;
