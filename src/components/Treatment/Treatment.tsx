@@ -3,12 +3,15 @@ import React, { FC, ReactNode, useEffect, useState } from "react";
 import { Context } from "@absmartly/javascript-sdk";
 import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
+import { useTriggerOnView } from "../../hooks/useTriggerOnView";
 
 interface TreatmentFunctionProps {
   name: string;
   context: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
+  triggerOnView?: boolean;
+  triggerOnViewOptions?: IntersectionObserverInit;
   children(variantAndVariables: {
     variant: number;
     variables: Record<string, any>;
@@ -21,6 +24,8 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   attributes,
   name,
   context,
+  triggerOnView = false,
+  triggerOnViewOptions,
 }) => {
   // State for storing the chosen variant, variables and whether this data
   // is loading from the server
@@ -51,7 +56,9 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
           {},
         );
 
-        const treatment = context.treatment(name);
+        const treatment = triggerOnView
+          ? context.peek(name)
+          : context.treatment(name);
 
         // Setting the state
         setVariantAndVariables({
@@ -63,6 +70,14 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
       .catch((e: Error) => console.error(e));
   }, [context, attributes]);
 
+  const triggerRef = useTriggerOnView({
+    ready: !loading,
+    options: triggerOnViewOptions,
+    context,
+    enabled: triggerOnView,
+    name,
+  });
+
   if (loading) {
     return loadingComponent != null ? (
       <>{loadingComponent}</>
@@ -73,6 +88,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
   return (
     <>
+      {triggerOnView && <div ref={triggerRef} />}
       {children({
         ...variantAndVariables,
         variant: variantAndVariables.variant ?? 0,
@@ -84,6 +100,8 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 interface TreatmentProps {
   name: string;
   context: Context;
+  triggerOnView?: boolean;
+  triggerOnViewOptions?: IntersectionObserverInit;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children?: ReactNode;
@@ -92,6 +110,8 @@ interface TreatmentProps {
 export const Treatment: FC<TreatmentProps> = ({
   children,
   loadingComponent,
+  triggerOnView = false,
+  triggerOnViewOptions,
   attributes,
   name,
   context,
@@ -110,7 +130,9 @@ export const Treatment: FC<TreatmentProps> = ({
 
   // Get the index of the first child with a variant matching the context treatment
   const getSelectedChildIndex = (context: Context) => {
-    const treatment = context.treatment(name);
+    const treatment = triggerOnView
+      ? context.peek(name)
+      : context.treatment(name);
 
     const index = childrenInfo?.findIndex(
       (x) => convertLetterToNumber(x.variant) === (treatment || 0),
@@ -147,13 +169,26 @@ export const Treatment: FC<TreatmentProps> = ({
       .catch((e: Error) => console.error(e));
   }, [context, attributes]);
 
+  const triggerRef = useTriggerOnView({
+    ready: !loading,
+    options: triggerOnViewOptions,
+    context,
+    enabled: triggerOnView,
+    name,
+  });
+
   // Return the selected Treatment
   if (loading) {
     if (loadingComponent) return <>{loadingComponent}</>;
     return <>{childrenArray[0]}</>;
   }
 
-  return <>{childrenArray[selectedTreatment || 0]}</>;
+  return (
+    <>
+      {triggerOnView && <div ref={triggerRef} />}
+      {childrenArray[selectedTreatment || 0]}
+    </>
+  );
 };
 
 interface TreatmentVariantProps {
