@@ -1,11 +1,7 @@
 import React from "react";
 import { cleanup, render, waitFor } from "@testing-library/react";
 
-import {
-  Treatment,
-  TreatmentFunction,
-  TreatmentVariant,
-} from "../src/components/Treatment";
+import { Treatment, TreatmentFunction, TreatmentVariant } from "../src";
 import { Char, TreatmentProps } from "../src/types";
 
 jest.mock("@absmartly/javascript-sdk");
@@ -256,6 +252,16 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       expect(TestComponent).toHaveBeenCalledTimes(1);
     });
   });
+
+  it("should accept strings as TreatmentVariant children", async () => {
+    mocks.context.treatment.mockReturnValue(0);
+
+    render(
+      <Treatment name="test_exp" context={mocks.context}>
+        <TreatmentVariant variant={0}>Hello world</TreatmentVariant>
+      </Treatment>
+    );
+  });
 });
 
 describe("TreatmentFunction Component", () => {
@@ -442,4 +448,14 @@ describe("TreatmentFunction Component", () => {
       });
     }
   );
+
+  it("should accept a string as a child", async () => {
+    mocks.context.treatment.mockReturnValue(1);
+
+    render(
+      <TreatmentFunction context={mocks.context} name="test_exp">
+        {({ variant }: TreatmentProps) => variant === 1 && "Hello world"}
+      </TreatmentFunction>
+    );
+  });
 });
