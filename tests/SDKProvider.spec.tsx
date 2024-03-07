@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC, PropsWithChildren } from "react";
 import "@testing-library/jest-dom";
 import {
   act,
@@ -104,11 +104,24 @@ describe("SDKProvider", () => {
     expect(mockCreateContext).not.toHaveBeenCalled();
   });
 
-  test("Whether useABSmartly hook works", async () => {
-    const { result } = renderHook(() => useABSmartly());
+  test("Whether useABSmartly throws an error when not used within an SDKProvider", async () => {
+    expect(() => renderHook(() => useABSmartly())).toThrow(
+      "useABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk"
+    );
+  })
 
-    expect(result.current.context).toBeUndefined();
-    expect(result.current.sdk).toBeUndefined();
+  test("Whether useABSmartly hook works", async () => {
+    const wrapper: FC<PropsWithChildren> = ({ children }) => (
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        {children}
+      </SDKProvider>
+    )
+    const { result } = renderHook(() => useABSmartly(), { wrapper });
+
+    expect(result.current.context).toBeDefined();
+    expect(result.current.sdk).toBeDefined();
+    expect(result.current.resetContext).toBeDefined();
+    expect(result.current.resetContext).toBeInstanceOf(Function);
   });
 
   test("resetContext function works as expected", async () => {
