@@ -18,24 +18,29 @@ const mockContextData = {
   experiments: [],
 };
 
+const mockContext = {
+} as Context;
+
 const mockCreateContext = jest.fn().mockImplementation(() => {
   return {
-    ...new Context(),
+    ...new Context({
+    } as SDK, { publishDelay: 5, refreshPeriod: 3000 }, { units: { user_id: "test_unit" } }, mockContextData),
     data: jest.fn().mockReturnValue(mockContextData),
   };
 });
 
 const mockCreateContextWith = jest.fn().mockImplementation(() => {
-  return new Context();
+  return new Context({
+  } as SDK, { publishDelay: 5, refreshPeriod: 3000 }, { units: { user_id: "test_unit" } }, mockContextData)
 });
 
-SDK.mockImplementation(() => {
+(SDK as jest.MockedClass<typeof SDK>).mockImplementation(() => {
   return {
     createContext: mockCreateContext,
     createContextWith: mockCreateContextWith,
     attributes: jest.fn().mockImplementation(),
     overrides: jest.fn().mockImplementation(),
-  };
+  } as unknown as SDK;
 });
 
 describe("SDKProvider", () => {
@@ -81,22 +86,22 @@ describe("SDKProvider", () => {
       </SDKProvider>
     );
 
-    expect(SDK).toBeCalledTimes(1);
+    expect(SDK).toHaveBeenCalledTimes(1);
     expect(SDK).toHaveBeenLastCalledWith(sdkOptions);
 
-    expect(mockCreateContext).toBeCalledTimes(1);
+    expect(mockCreateContext).toHaveBeenCalledTimes(1);
     expect(mockCreateContext).toHaveBeenLastCalledWith(contextOptions);
   });
 
   test("Whether it will create an SDK instance with a context that has prefetched context data", async () => {
     render(
-      <SDKProvider context={mockContextData}>
+      <SDKProvider context={mockContext}>
         <TestComponent />
       </SDKProvider>
     );
 
-    expect(SDK).not.toBeCalled();
-    expect(mockCreateContext).not.toBeCalled();
+    expect(SDK).not.toHaveBeenCalled();
+    expect(mockCreateContext).not.toHaveBeenCalled();
   });
 
   test("Whether useABSmartly hook works", async () => {

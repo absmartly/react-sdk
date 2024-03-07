@@ -14,7 +14,7 @@ import { ABSmartly, ABSmartlyContext, ContextOptionsType, ContextRequestType, SD
 type SDKProviderNoContext = {
     sdkOptions: SDKOptionsType;
     context?: never;
-    contextOptions: Record<string, any>;
+    contextOptions: { units: Record<string, any> };
     children?: ReactNode;
 };
 
@@ -27,6 +27,7 @@ type SDKProviderWithContext = {
 
 type SDKProviderProps = SDKProviderNoContext | SDKProviderWithContext;
 
+// @ts-ignore
 const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined, resetContext: () => { } });
 
 export const SDKProvider: FC<SDKProviderProps> = ({
