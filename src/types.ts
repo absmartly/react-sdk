@@ -10,15 +10,15 @@ export type SDKOptionsType = {
     retries?: number;
     timeout?: number;
     eventLogger?: (
-        context: typeof absmartly.Context,
+        context: absmartly.Context,
         eventName: EventNameType,
         data: any
     ) => void;
 };
 
-export type ABSmartlyContext = typeof absmartly.Context;
+export type ABSmartlyContext = absmartly.Context;
 
-export type ABSmartlySDK = typeof absmartly.SDK;
+export type ABSmartlySDK = absmartly.SDK;
 
 export type ABSmartly = {
     sdk: ABSmartlySDK;

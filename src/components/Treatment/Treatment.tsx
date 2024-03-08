@@ -6,7 +6,7 @@ import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
 
 interface TreatmentFunctionProps {
   name: string;
-  context: typeof absmartly.Context;
+  context: absmartly.Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children(variantAndVariables: {
@@ -83,7 +83,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
 interface TreatmentProps {
   name: string;
-  context: typeof absmartly.Context;
+  context: absmartly.Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children?: ReactNode;
@@ -109,7 +109,7 @@ export const Treatment: FC<TreatmentProps> = ({
   });
 
   // Get the index of the first child with a variant matching the context treatment
-  const getSelectedChildIndex = (context: typeof absmartly.Context) => {
+  const getSelectedChildIndex = (context: absmartly.Context) => {
     const treatment = context.treatment(name);
 
     const index = childrenInfo?.findIndex(

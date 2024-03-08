@@ -14,7 +14,7 @@ import { ABSmartly, ABSmartlyContext, ContextOptionsType, ContextRequestType, SD
 type SDKProviderNoContext = {
     sdkOptions: SDKOptionsType;
     context?: never;
-    contextOptions: Record<string, any>;
+    contextOptions: { units: Record<string, any> };
     children?: ReactNode;
 };
 
@@ -27,7 +27,7 @@ type SDKProviderWithContext = {
 
 type SDKProviderProps = SDKProviderNoContext | SDKProviderWithContext;
 
-const SDK = createContext<ABSmartly>({ sdk: undefined, context: undefined, resetContext: () => { } });
+const SDK = createContext<ABSmartly | null>(null);
 
 export const SDKProvider: FC<SDKProviderProps> = ({
     sdkOptions,
@@ -92,4 +92,12 @@ export function withABSmartly<
     return ComponentWithABSmartly;
 }
 
-export const useABSmartly = () => useContext(SDK);
+export const useABSmartly = () => {
+    const sdk = useContext(SDK);
+
+    if (!sdk) {
+        throw new Error("useABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk");
+    }
+
+    return sdk;
+};
