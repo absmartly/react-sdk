@@ -18,20 +18,27 @@ const mockContextData = {
   experiments: [],
 };
 
-const mockContext = {
-} as Context;
+const mockContext = {} as Context;
 
 const mockCreateContext = jest.fn().mockImplementation(() => {
   return {
-    ...new Context({
-    } as SDK, { publishDelay: 5, refreshPeriod: 3000 }, { units: { user_id: "test_unit" } }, mockContextData),
+    ...new Context(
+      {} as SDK,
+      { publishDelay: 5, refreshPeriod: 3000 },
+      { units: { user_id: "test_unit" } },
+      mockContextData,
+    ),
     data: jest.fn().mockReturnValue(mockContextData),
   };
 });
 
 const mockCreateContextWith = jest.fn().mockImplementation(() => {
-  return new Context({
-  } as SDK, { publishDelay: 5, refreshPeriod: 3000 }, { units: { user_id: "test_unit" } }, mockContextData)
+  return new Context(
+    {} as SDK,
+    { publishDelay: 5, refreshPeriod: 3000 },
+    { units: { user_id: "test_unit" } },
+    mockContextData,
+  );
 });
 
 (SDK as jest.MockedClass<typeof SDK>).mockImplementation(() => {
@@ -83,7 +90,7 @@ describe("SDKProvider", () => {
     render(
       <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
         <TestComponent />
-      </SDKProvider>
+      </SDKProvider>,
     );
 
     expect(SDK).toHaveBeenCalledTimes(1);
@@ -97,7 +104,7 @@ describe("SDKProvider", () => {
     render(
       <SDKProvider context={mockContext}>
         <TestComponent />
-      </SDKProvider>
+      </SDKProvider>,
     );
 
     expect(SDK).not.toHaveBeenCalled();
@@ -106,16 +113,16 @@ describe("SDKProvider", () => {
 
   test("Whether useABSmartly throws an error when not used within an SDKProvider", async () => {
     expect(() => renderHook(() => useABSmartly())).toThrow(
-      "useABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk"
+      "useABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk",
     );
-  })
+  });
 
   test("Whether useABSmartly hook works", async () => {
     const wrapper: FC<PropsWithChildren> = ({ children }) => (
       <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
         {children}
       </SDKProvider>
-    )
+    );
     const { result } = renderHook(() => useABSmartly(), { wrapper });
 
     expect(result.current.context).toBeDefined();
@@ -132,7 +139,7 @@ describe("SDKProvider", () => {
           onClick={() => {
             resetContext(
               { units: { user_id: "newUserID" } },
-              { publishDelay: 5000, refreshPeriod: 5000 }
+              { publishDelay: 5000, refreshPeriod: 5000 },
             );
           }}
         >
@@ -144,7 +151,7 @@ describe("SDKProvider", () => {
     render(
       <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
         <TestComponent />
-      </SDKProvider>
+      </SDKProvider>,
     );
 
     const button = screen.getByText("Reset Context");
@@ -159,7 +166,7 @@ describe("SDKProvider", () => {
       {
         publishDelay: 5000,
         refreshPeriod: 5000,
-      }
+      },
     );
   });
 });

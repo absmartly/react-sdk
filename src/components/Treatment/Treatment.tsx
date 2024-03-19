@@ -1,12 +1,12 @@
 import React, { FC, ReactNode, useEffect, useState } from "react";
 
-import absmartly from "@absmartly/javascript-sdk";
+import { Context } from "@absmartly/javascript-sdk";
 import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
 
 interface TreatmentFunctionProps {
   name: string;
-  context: absmartly.Context;
+  context: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children(variantAndVariables: {
@@ -42,13 +42,13 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
       .then(() => {
         // Turning the variable keys and values into an array of arrays
         const variablesArray = Object.keys(context.variableKeys()).map(
-          (key) => [key, context.peekVariableValue(key, "")]
+          (key) => [key, context.peekVariableValue(key, "")],
         );
 
         // Converting the array of arrays into a regular object
         const variablesObject = variablesArray.reduce(
           (obj, i) => Object.assign(obj, { [i[0]]: i[1] }),
-          {}
+          {},
         );
 
         const treatment = context.treatment(name);
@@ -83,7 +83,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
 interface TreatmentProps {
   name: string;
-  context: absmartly.Context;
+  context: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children?: ReactNode;
@@ -97,7 +97,7 @@ export const Treatment: FC<TreatmentProps> = ({
   context,
 }) => {
   const [loading, setLoading] = useState<boolean>(
-    context && !context.isReady()
+    context && !context.isReady(),
   );
 
   // Turning the children into an array of objects and mapping them as variants
@@ -109,11 +109,11 @@ export const Treatment: FC<TreatmentProps> = ({
   });
 
   // Get the index of the first child with a variant matching the context treatment
-  const getSelectedChildIndex = (context: absmartly.Context) => {
+  const getSelectedChildIndex = (context: Context) => {
     const treatment = context.treatment(name);
 
     const index = childrenInfo?.findIndex(
-      (x) => convertLetterToNumber(x.variant) === (treatment || 0)
+      (x) => convertLetterToNumber(x.variant) === (treatment || 0),
     );
 
     if (index === -1) {
@@ -125,7 +125,7 @@ export const Treatment: FC<TreatmentProps> = ({
 
   // The index of the selected variant in the children array
   const [selectedTreatment, setSelectedTreatment] = useState(
-    context?.isReady() ? getSelectedChildIndex(context) : null
+    context?.isReady() ? getSelectedChildIndex(context) : null,
   );
 
   // Making the children prop into an array for selecting a single element later.
