@@ -19,6 +19,5 @@
     "allowSyntheticDefaultImports": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "lib"],
-  "typeRoots": ["node_modules/@types", "src/**/*.d.ts"]
+  "exclude": ["node_modules", "lib"]
 }
