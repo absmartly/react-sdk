@@ -49,7 +49,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
         <TreatmentVariant variant="2">
           <p>Hello 2</p>
         </TreatmentVariant>
-      </Treatment>
+      </Treatment>,
     );
 
     await waitFor(() => {
@@ -80,7 +80,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
         <TestTreatmentVariant variant={0}>
           <p>Hello 0</p>
         </TestTreatmentVariant>
-      </Treatment>
+      </Treatment>,
     );
 
     await waitFor(() => {
@@ -113,7 +113,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
         <TreatmentVariant variant="1">
           <p>Hello World 1!</p>
         </TreatmentVariant>
-      </Treatment>
+      </Treatment>,
     );
 
     expect(mocks.context.treatment).not.toHaveBeenCalled();
@@ -158,7 +158,6 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       const ControlComponent = jest.fn();
       const TestLoadingComponent = jest.fn();
 
-
       mocks.context.isReady.mockReturnValue(true);
       mocks.context.isFailed.mockReturnValue(false);
       mocks.context.treatment.mockReturnValue(variant);
@@ -175,14 +174,14 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
           <TreatmentVariant variant={component as number | Char}>
             <TestComponent />
           </TreatmentVariant>
-        </Treatment>
+        </Treatment>,
       );
 
       await waitFor(() => {
         expect(ControlComponent).toHaveBeenCalledTimes(0);
         expect(TestComponent).toHaveBeenCalledTimes(1);
       });
-    }
+    },
   );
 
   it.each([
@@ -211,13 +210,13 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
           <TreatmentVariant variant={component as number | Char}>
             <TestComponent />
           </TreatmentVariant>
-        </Treatment>
+        </Treatment>,
       );
 
       await waitFor(() => {
         expect(TestComponent).toHaveBeenCalledTimes(1);
       });
-    }
+    },
   );
 
   it("should not call context.attributes with no attribute property", async () => {
@@ -232,7 +231,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
         <TreatmentVariant variant="1">
           <TestComponent></TestComponent>
         </TreatmentVariant>
-      </Treatment>
+      </Treatment>,
     );
 
     await waitFor(() => {
@@ -249,7 +248,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     render(
       <Treatment name="test_exp" context={mocks.context}>
         <TreatmentVariant variant={0}>Hello world</TreatmentVariant>
-      </Treatment>
+      </Treatment>,
     );
   });
 });
@@ -284,7 +283,7 @@ describe("TreatmentFunction Component", () => {
             <TestComponent2 />
           )
         }
-      </TreatmentFunction>
+      </TreatmentFunction>,
     );
 
     await waitFor(() => {
@@ -315,7 +314,7 @@ describe("TreatmentFunction Component", () => {
         name="test_exp"
       >
         {({ variant }: TreatmentProps) => variant === 0 && <TestComponent />}
-      </TreatmentFunction>
+      </TreatmentFunction>,
     );
 
     await waitFor(() => {
@@ -368,7 +367,7 @@ describe("TreatmentFunction Component", () => {
             <TestComponentThatShouldntRender />
           )
         }
-      </TreatmentFunction>
+      </TreatmentFunction>,
     );
 
     expect(mocks.context.treatment).not.toHaveBeenCalled();
@@ -421,13 +420,13 @@ describe("TreatmentFunction Component", () => {
           {(choices: TreatmentProps) =>
             variant === choices.variant && <TestComponent />
           }
-        </TreatmentFunction>
+        </TreatmentFunction>,
       );
 
       await waitFor(() => {
         expect(TestComponent).toHaveBeenCalledTimes(1);
       });
-    }
+    },
   );
 
   it("should accept a string as a child", async () => {
@@ -436,7 +435,7 @@ describe("TreatmentFunction Component", () => {
     render(
       <TreatmentFunction context={mocks.context} name="test_exp">
         {({ variant }: TreatmentProps) => variant === 1 && "Hello world"}
-      </TreatmentFunction>
+      </TreatmentFunction>,
     );
   });
 });
