@@ -3,10 +3,11 @@ import React, { FC, ReactNode, useEffect, useState } from "react";
 import { Context } from "@absmartly/javascript-sdk";
 import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
+import { useABSmartly } from "../SDKProvider";
 
 interface TreatmentFunctionProps {
   name: string;
-  context: Context;
+  context?: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children(variantAndVariables: {
@@ -22,6 +23,8 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   name,
   context,
 }) => {
+  const ensuredContext = context ?? useABSmartly().context;
+
   // State for storing the chosen variant, variables and whether this data
   // is loading from the server
   const [variantAndVariables, setVariantAndVariables] = useState<{
@@ -31,18 +34,19 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     variant: !loadingComponent ? 0 : undefined,
     variables: {},
   });
-  const [loading, setLoading] = useState<boolean>(!context.isReady());
+
+  const [loading, setLoading] = useState<boolean>(!ensuredContext.isReady());
 
   // Set variant number and variables in state
   useEffect(() => {
-    if (attributes) context.attributes(attributes);
+    if (attributes) ensuredContext.attributes(attributes);
 
-    context
+    ensuredContext
       .ready()
       .then(() => {
         // Turning the variable keys and values into an array of arrays
-        const variablesArray = Object.keys(context.variableKeys()).map(
-          (key) => [key, context.peekVariableValue(key, "")],
+        const variablesArray = Object.keys(ensuredContext.variableKeys()).map(
+          (key) => [key, ensuredContext.peekVariableValue(key, "")],
         );
 
         // Converting the array of arrays into a regular object
@@ -51,7 +55,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
           {},
         );
 
-        const treatment = context.treatment(name);
+        const treatment = ensuredContext.treatment(name);
 
         // Setting the state
         setVariantAndVariables({
@@ -83,7 +87,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
 interface TreatmentProps {
   name: string;
-  context: Context;
+  context?: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
   children?: ReactNode;
@@ -96,8 +100,10 @@ export const Treatment: FC<TreatmentProps> = ({
   name,
   context,
 }) => {
+  const ensuredContext = context ?? useABSmartly().context;
+
   const [loading, setLoading] = useState<boolean>(
-    context && !context.isReady(),
+    ensuredContext && !ensuredContext.isReady(),
   );
 
   // Turning the children into an array of objects and mapping them as variants
@@ -133,13 +139,13 @@ export const Treatment: FC<TreatmentProps> = ({
 
   // Set variant number and variables in state
   useEffect(() => {
-    if (attributes) context.attributes(attributes);
+    if (attributes) ensuredContext.attributes(attributes);
 
-    context
+    ensuredContext
       .ready()
       .then(() => {
         // Setting the state
-        setSelectedTreatment(getSelectedChildIndex(context));
+        setSelectedTreatment(getSelectedChildIndex(ensuredContext));
       })
       .then(() => {
         setLoading(false);
