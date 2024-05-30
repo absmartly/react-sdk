@@ -1,18 +1,22 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
+import { vi, it, expect, describe, afterEach } from "vitest";
 import React from "react";
 import { SDK, TreatmentProps } from "../src";
 import { TreatmentFunction } from "../src/components/Treatment/TreatmentFunction";
 import { mockedUseABSmartly, mocks } from "./mocks";
 
-jest.mock("../src/hooks/useABSmartly");
+vi.mock("../src/hooks/useABSmartly");
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 describe("TreatmentFunction Component", () => {
   it("should not render loading component when ready", async () => {
-    const TestComponent0 = jest.fn();
-    const TestComponent1 = jest.fn();
-    const TestComponent2 = jest.fn();
-    const TestLoadingComponent = jest.fn();
+    const TestComponent0 = vi.fn();
+    const TestComponent1 = vi.fn();
+    const TestComponent2 = vi.fn();
+    const TestLoadingComponent = vi.fn();
 
     const attributes = { attr1: 15, attr2: 50 };
 
@@ -51,8 +55,8 @@ describe("TreatmentFunction Component", () => {
   });
 
   it("should render loading component when not ready", async () => {
-    const TestLoadingComponent = jest.fn();
-    const TestComponent = jest.fn();
+    const TestLoadingComponent = vi.fn();
+    const TestComponent = vi.fn();
 
     mocks.context.isReady.mockReturnValue(false);
     mocks.context.isFailed.mockReturnValue(false);
@@ -98,8 +102,8 @@ describe("TreatmentFunction Component", () => {
   });
 
   it("Should render control variant when no loading component is provided", async () => {
-    const TestComponent = jest.fn();
-    const TestComponentThatShouldntRender = jest.fn();
+    const TestComponent = vi.fn();
+    const TestComponentThatShouldntRender = vi.fn();
 
     mocks.context.isReady.mockReturnValue(false);
     mocks.context.isFailed.mockReturnValue(false);
@@ -158,8 +162,8 @@ describe("TreatmentFunction Component", () => {
   it.each([0, 1, 2, 3, 4])(
     "should render treatment component %i by variant (%s)",
     async (variant) => {
-      const TestComponent = jest.fn();
-      const TestLoadingComponent = jest.fn();
+      const TestComponent = vi.fn();
+      const TestLoadingComponent = vi.fn();
 
       mocks.context.isReady.mockReturnValue(true);
       mocks.context.isFailed.mockReturnValue(false);
@@ -200,7 +204,7 @@ describe("TreatmentFunction Component", () => {
       resetContext: () => {},
     });
 
-    const TestComponent = jest.fn();
+    const TestComponent = vi.fn();
 
     render(
       <TreatmentFunction name="test_exp">

@@ -1,19 +1,20 @@
 import { Context } from "@absmartly/javascript-sdk";
+import { Mocked, MockedFunction, vi } from "vitest";
 import { useABSmartly } from "../src/hooks/useABSmartly";
 
 export const mocks = {
   context: {
-    treatment: jest.fn(),
-    experimentConfig: jest.fn(),
-    attributes: jest.fn(),
-    ready: jest.fn(),
-    isReady: jest.fn(),
-    isFailed: jest.fn(),
-    variableKeys: jest.fn().mockReturnValue({ "button.color": "red" }),
-    peekVariableValue: jest.fn(),
-  } as unknown as jest.Mocked<Context>,
+    treatment: vi.fn(),
+    experimentConfig: vi.fn(),
+    attributes: vi.fn(),
+    ready: vi.fn(),
+    isReady: vi.fn(),
+    isFailed: vi.fn(),
+    variableKeys: vi.fn().mockReturnValue({ "button.color": "red" }),
+    peekVariableValue: vi.fn(),
+  } as unknown as Mocked<Context>,
 };
 
-export const mockedUseABSmartly = useABSmartly as jest.MockedFunction<
+export const mockedUseABSmartly = useABSmartly as MockedFunction<
   typeof useABSmartly
 >;
