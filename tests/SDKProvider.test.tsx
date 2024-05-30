@@ -1,4 +1,3 @@
-import React, { FC, PropsWithChildren } from "react";
 import "@testing-library/jest-dom";
 import {
   act,
@@ -7,10 +6,12 @@ import {
   renderHook,
   screen,
 } from "@testing-library/react";
+import React, { FC, PropsWithChildren } from "react";
 
 import { Context, SDK } from "@absmartly/javascript-sdk";
 
-import { SDKProvider, useABSmartly } from "../src/components/SDKProvider";
+import { SDKProvider } from "../src/components/SDKProvider";
+import { useABSmartly } from "../src/hooks/useABSmartly";
 
 jest.mock("@absmartly/javascript-sdk");
 

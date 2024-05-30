@@ -3,7 +3,7 @@ import { useABSmartly, useTreatment } from "../src";
 
 import { renderHook, waitFor } from "@testing-library/react";
 
-jest.mock("../src/components/SDKProvider");
+jest.mock("../src/hooks/useABSmartly");
 
 const mockedUseABSmartly = useABSmartly as jest.MockedFunction<
   typeof useABSmartly

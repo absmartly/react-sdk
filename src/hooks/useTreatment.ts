@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useABSmartly } from "../components/SDKProvider";
+import { useABSmartly } from "./useABSmartly";
 
 export const useTreatment = (name: string, peek = false) => {
   const { context } = useABSmartly();
