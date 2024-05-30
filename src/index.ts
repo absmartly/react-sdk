@@ -8,6 +8,7 @@ import {
   Treatment,
   TreatmentVariant,
 } from "./components/Treatment";
+import { useTreatment } from "./hooks/useTreatment";
 import { mergeConfig } from "@absmartly/javascript-sdk";
 import {
   ABSmartly,
@@ -27,6 +28,7 @@ export {
   TreatmentVariant,
   useABSmartly,
   withABSmartly,
+  useTreatment,
 };
 
 export default SDKProvider;
