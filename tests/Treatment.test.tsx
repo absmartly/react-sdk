@@ -1,19 +1,24 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
 import React from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SDK } from "@absmartly/javascript-sdk";
 import { Treatment, TreatmentVariant } from "../src";
 import { Char } from "../src/types";
 import { mockedUseABSmartly, mocks } from "./mocks";
 
-jest.mock("@absmartly/javascript-sdk");
-jest.mock("../src/hooks/useABSmartly");
+vi.mock("@absmartly/javascript-sdk");
+vi.mock("../src/hooks/useABSmartly");
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
 describe("Treatment Component (TreatmentVariants as children)", () => {
   it("should not render loading component when ready", async () => {
-    const TestComponent = jest.fn();
-    const TestLoadingComponent = jest.fn();
+    const TestComponent = vi.fn();
+    const TestLoadingComponent = vi.fn();
 
     const attributes = { attr1: 15, attr2: 50 };
 
@@ -52,8 +57,8 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   });
 
   it("should render loading component when not ready", async () => {
-    const TestLoadingComponent = jest.fn();
-    const TestTreatmentVariant = jest.fn();
+    const TestLoadingComponent = vi.fn();
+    const TestTreatmentVariant = vi.fn();
 
     mocks.context.isReady.mockReturnValue(false);
     mocks.context.isFailed.mockReturnValue(false);
@@ -81,7 +86,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   });
 
   it("Should render control variant when no loading component is provided", async () => {
-    const TestComponent = jest.fn();
+    const TestComponent = vi.fn();
 
     mocks.context.isReady.mockReturnValue(false);
     mocks.context.isFailed.mockReturnValue(false);
@@ -143,9 +148,9 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   ])(
     "should render treatment component %i by variant (%s)",
     async (variant, component) => {
-      const TestComponent = jest.fn();
-      const ControlComponent = jest.fn();
-      const TestLoadingComponent = jest.fn();
+      const TestComponent = vi.fn();
+      const ControlComponent = vi.fn();
+      const TestLoadingComponent = vi.fn();
 
       mocks.context.isReady.mockReturnValue(true);
       mocks.context.isFailed.mockReturnValue(false);
@@ -182,8 +187,8 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   ])(
     "should render treatment component %i by alpha (%s)",
     async (variant, component) => {
-      const TestComponent = jest.fn();
-      const TestLoadingComponent = jest.fn();
+      const TestComponent = vi.fn();
+      const TestLoadingComponent = vi.fn();
 
       mocks.context.isReady.mockReturnValue(true);
       mocks.context.isFailed.mockReturnValue(false);
@@ -209,7 +214,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   );
 
   it("should not call context.attributes with no attribute property", async () => {
-    const TestComponent = jest.fn();
+    const TestComponent = vi.fn();
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.isFailed.mockReturnValue(false);
     mocks.context.treatment.mockReturnValue(1);
@@ -248,7 +253,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       resetContext: () => {},
     });
 
-    const TestComponent = jest.fn();
+    const TestComponent = vi.fn();
 
     render(
       <Treatment name="test_exp">

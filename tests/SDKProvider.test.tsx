@@ -1,19 +1,25 @@
-import "@testing-library/jest-dom";
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   renderHook,
   screen,
 } from "@testing-library/react";
 import React, { FC, PropsWithChildren } from "react";
+import { afterEach, describe, expect, it, MockedClass, vi } from "vitest";
 
 import { Context, SDK } from "@absmartly/javascript-sdk";
 
 import { SDKProvider } from "../src/components/SDKProvider";
 import { useABSmartly } from "../src/hooks/useABSmartly";
 
-jest.mock("@absmartly/javascript-sdk");
+vi.mock("@absmartly/javascript-sdk");
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 const mockContextData = {
   experiments: [],
@@ -21,7 +27,7 @@ const mockContextData = {
 
 const mockContext = {} as Context;
 
-const mockCreateContext = jest.fn().mockImplementation(() => {
+const mockCreateContext = vi.fn().mockImplementation(() => {
   return {
     ...new Context(
       {} as SDK,
@@ -29,11 +35,11 @@ const mockCreateContext = jest.fn().mockImplementation(() => {
       { units: { user_id: "test_unit" } },
       mockContextData,
     ),
-    data: jest.fn().mockReturnValue(mockContextData),
+    data: vi.fn().mockReturnValue(mockContextData),
   };
 });
 
-const mockCreateContextWith = jest.fn().mockImplementation(() => {
+const mockCreateContextWith = vi.fn().mockImplementation(() => {
   return new Context(
     {} as SDK,
     { publishDelay: 5, refreshPeriod: 3000 },
@@ -42,17 +48,17 @@ const mockCreateContextWith = jest.fn().mockImplementation(() => {
   );
 });
 
-(SDK as jest.MockedClass<typeof SDK>).mockImplementation(() => {
+(SDK as MockedClass<typeof SDK>).mockImplementation(() => {
   return {
     createContext: mockCreateContext,
     createContextWith: mockCreateContextWith,
-    attributes: jest.fn().mockImplementation(),
-    overrides: jest.fn().mockImplementation(),
+    attributes: vi.fn(),
+    overrides: vi.fn(),
   } as unknown as SDK;
 });
 
 describe("SDKProvider", () => {
-  const TestComponent = jest.fn();
+  const TestComponent = vi.fn();
 
   const context = {
     test: 2,
@@ -87,7 +93,7 @@ describe("SDKProvider", () => {
     },
   };
 
-  test("Whether it creates an instance of the ABSmartly JS-SDK and an ABSmartly Context", async () => {
+  it("Whether it creates an instance of the ABSmartly JS-SDK and an ABSmartly Context", async () => {
     render(
       <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
         <TestComponent />
@@ -101,7 +107,7 @@ describe("SDKProvider", () => {
     expect(mockCreateContext).toHaveBeenLastCalledWith(contextOptions);
   });
 
-  test("Whether it will create an SDK instance with a context that has prefetched context data", async () => {
+  it("Whether it will create an SDK instance with a context that has prefetched context data", async () => {
     render(
       <SDKProvider context={mockContext}>
         <TestComponent />
@@ -112,13 +118,13 @@ describe("SDKProvider", () => {
     expect(mockCreateContext).not.toHaveBeenCalled();
   });
 
-  test("Whether useABSmartly throws an error when not used within an SDKProvider", async () => {
+  it("Whether useABSmartly throws an error when not used within an SDKProvider", async () => {
     expect(() => renderHook(() => useABSmartly())).toThrow(
       "useABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk",
     );
   });
 
-  test("Whether useABSmartly hook works", async () => {
+  it("Whether useABSmartly hook works", async () => {
     const wrapper: FC<PropsWithChildren> = ({ children }) => (
       <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
         {children}
@@ -132,7 +138,7 @@ describe("SDKProvider", () => {
     expect(result.current.resetContext).toBeInstanceOf(Function);
   });
 
-  test("resetContext function works as expected", async () => {
+  it("resetContext function works as expected", async () => {
     const TestComponent = () => {
       const { resetContext } = useABSmartly();
       return (
