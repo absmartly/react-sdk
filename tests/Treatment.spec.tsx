@@ -1,11 +1,21 @@
 import React from "react";
 import { cleanup, render, waitFor } from "@testing-library/react";
 
-import { Treatment, TreatmentFunction, TreatmentVariant } from "../src";
+import {
+  Treatment,
+  TreatmentFunction,
+  TreatmentVariant,
+  useABSmartly,
+} from "../src";
 import { Char, TreatmentProps } from "../src/types";
-import { Context } from "@absmartly/javascript-sdk";
+import { Context, SDK } from "@absmartly/javascript-sdk";
 
 jest.mock("@absmartly/javascript-sdk");
+jest.mock("../src/components/SDKProvider");
+
+const mockedUseABSmartly = useABSmartly as jest.MockedFunction<
+  typeof useABSmartly
+>;
 
 afterEach(cleanup);
 const mocks = {
@@ -251,6 +261,31 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       </Treatment>,
     );
   });
+
+  it("should use the default context if one is not passed in", async () => {
+    mockedUseABSmartly.mockReturnValue({
+      context: mocks.context,
+      sdk: null as unknown as SDK,
+      resetContext: () => {},
+    });
+
+    const TestComponent = jest.fn();
+
+    render(
+      <Treatment name="test_exp">
+        <TreatmentVariant variant={0}>
+          <TestComponent />
+        </TreatmentVariant>
+      </Treatment>,
+    );
+
+    expect(mockedUseABSmartly).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => {
+      expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
+      expect(TestComponent).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe("TreatmentFunction Component", () => {
@@ -437,5 +472,28 @@ describe("TreatmentFunction Component", () => {
         {({ variant }: TreatmentProps) => variant === 1 && "Hello world"}
       </TreatmentFunction>,
     );
+  });
+
+  it("should use the default context if one is not passed in", async () => {
+    mockedUseABSmartly.mockReturnValue({
+      context: mocks.context,
+      sdk: null as unknown as SDK,
+      resetContext: () => {},
+    });
+
+    const TestComponent = jest.fn();
+
+    render(
+      <TreatmentFunction name="test_exp">
+        {({ variant }: TreatmentProps) => variant === 1 && <TestComponent />}
+      </TreatmentFunction>,
+    );
+
+    expect(mockedUseABSmartly).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => {
+      expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
+      expect(TestComponent).toHaveBeenCalledTimes(1);
+    });
   });
 });
