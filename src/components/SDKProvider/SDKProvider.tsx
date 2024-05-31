@@ -1,14 +1,8 @@
-import React, {
-  ComponentType,
-  createContext,
-  FC,
-  ReactNode,
-  useContext,
-  useState,
-} from "react";
+import React, { FC, ReactNode, useState } from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
 
+import { _SdkContext } from "../../hooks/useABSmartly";
 import {
   ABSmartly,
   ABSmartlyContext,
@@ -32,8 +26,6 @@ type SDKProviderWithContext = {
 };
 
 type SDKProviderProps = SDKProviderNoContext | SDKProviderWithContext;
-
-const SDK = createContext<ABSmartly | null>(null);
 
 export const SDKProvider: FC<SDKProviderProps> = ({
   sdkOptions,
@@ -80,39 +72,5 @@ export const SDKProvider: FC<SDKProviderProps> = ({
     resetContext,
   };
 
-  return <SDK.Provider value={value}>{children}</SDK.Provider>;
-};
-
-interface WithABSmartlyProps {
-  absmartly: ABSmartly;
-}
-
-export function withABSmartly<
-  P extends WithABSmartlyProps = WithABSmartlyProps,
->(Component: ComponentType<P>) {
-  const displayName = Component.displayName || Component.name || "Component";
-
-  const ComponentWithABSmartly = (props: Omit<P, keyof WithABSmartlyProps>) => {
-    return (
-      <SDK.Consumer>
-        {(value) => <Component {...(props as P)} absmartly={value} />}
-      </SDK.Consumer>
-    );
-  };
-
-  ComponentWithABSmartly.displayName = `withABSmartly(${displayName})`;
-
-  return ComponentWithABSmartly;
-}
-
-export const useABSmartly = () => {
-  const sdk = useContext(SDK);
-
-  if (!sdk) {
-    throw new Error(
-      "useABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk",
-    );
-  }
-
-  return sdk;
+  return <_SdkContext.Provider value={value}>{children}</_SdkContext.Provider>;
 };
