@@ -8,6 +8,10 @@ export const useTreatment = (name: string, peek = false) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  if (context === null) {
+    return { variant, loading, error, context };
+  }
+
   useEffect(() => {
     const fetchTreatment = async () => {
       try {

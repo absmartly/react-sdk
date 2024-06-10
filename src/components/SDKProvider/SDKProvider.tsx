@@ -1,6 +1,6 @@
 import { useState, type FC, type ReactNode } from "react";
 
-import absmartly from "@absmartly/javascript-sdk";
+import absmartly, { Context, SDK } from "@absmartly/javascript-sdk";
 
 import { _SdkContext } from "../../hooks/useABSmartly";
 import type {
@@ -25,7 +25,17 @@ type SDKProviderWithContext = {
   contextOptions?: never;
 };
 
-type SDKProviderProps = SDKProviderNoContext | SDKProviderWithContext;
+type SDKProviderNullContext = {
+  context: null;
+  children?: ReactNode;
+  sdkOptions: SDKOptionsType;
+  contextOptions?: never;
+};
+
+type SDKProviderProps =
+  | SDKProviderNoContext
+  | SDKProviderWithContext
+  | SDKProviderNullContext;
 
 export const SDKProvider: FC<SDKProviderProps> = ({
   sdkOptions,
@@ -33,12 +43,17 @@ export const SDKProvider: FC<SDKProviderProps> = ({
   context,
   children,
 }) => {
-  const sdk = context
-    ? context["_sdk"]
-    : new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
+  const sdk: SDK =
+    context == null
+      ? new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions })
+      : context["_sdk"];
 
-  const [providedContext, setProvidedContext] = useState(
-    context ? context : sdk.createContext(contextOptions),
+  const [providedContext, setProvidedContext] = useState<Context | null>(
+    context === null
+      ? null
+      : context === undefined
+        ? sdk.createContext(contextOptions)
+        : context,
   );
 
   const resetContext = async (
@@ -46,10 +61,15 @@ export const SDKProvider: FC<SDKProviderProps> = ({
     contextOptions?: ContextOptionsType,
   ) => {
     try {
+      if (providedContext == null) {
+        setProvidedContext(sdk.createContext(params, contextOptions));
+        return;
+      }
+
       await providedContext.ready();
 
       const contextData = providedContext.data();
-      const oldContextOptions = providedContext._opts;
+      const oldContextOptions = providedContext["_opts"];
 
       const combinedContextOptions = {
         ...oldContextOptions,
