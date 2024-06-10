@@ -23,7 +23,7 @@ export const Treatment: FC<TreatmentProps> = ({
   const ensuredContext = context ?? useABSmartly().context;
 
   const [loading, setLoading] = useState<boolean>(
-    ensuredContext && !ensuredContext.isReady(),
+    ensuredContext != null ? !ensuredContext.isReady() : true,
   );
 
   // Turning the children into an array of objects and mapping them as variants

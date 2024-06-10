@@ -18,7 +18,7 @@ export type ABSmartlySDK = SDK;
 
 export type ABSmartly = {
   sdk: ABSmartlySDK;
-  context: ABSmartlyContext;
+  context: ABSmartlyContext | null;
   resetContext: (
     contextRequest: ContextRequestType,
     contextOptions?: ContextOptionsType,

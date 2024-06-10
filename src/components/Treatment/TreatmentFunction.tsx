@@ -32,7 +32,9 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     variables: {},
   });
 
-  const [loading, setLoading] = useState<boolean>(!ensuredContext.isReady());
+  const [loading, setLoading] = useState<boolean>(
+    !ensuredContext?.isReady() ?? false,
+  );
 
   const getLoadingComponent = () => {
     return loadingComponent != null ? (
@@ -41,6 +43,10 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
       <>{children({ ...variantAndVariables, variant: 0 })}</>
     );
   };
+
+  if (ensuredContext === null) {
+    return getLoadingComponent();
+  }
 
   // Set variant number and variables in state
   useEffect(() => {

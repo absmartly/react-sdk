@@ -25,6 +25,6 @@
     "declarationMap": true
   },
   "include": ["src", "tests"],
-  "exclude": ["node_modules", "lib"],
+  "exclude": ["node_modules", "lib", "tests"],
   "typeRoots": ["node_modules/@types", "src/**/*.d.ts"]
 }

@@ -1,13 +1,13 @@
 import {
-  act,
   cleanup,
-  fireEvent,
   render,
   renderHook,
   screen,
+  waitFor,
 } from "@testing-library/react";
-import { FC, PropsWithChildren } from "react";
-import { afterEach, describe, expect, it, MockedClass, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { useEffect, useState, type FC, type PropsWithChildren } from "react";
+import { afterEach, describe, expect, it, vi, type MockedClass } from "vitest";
 
 import { Context, SDK } from "@absmartly/javascript-sdk";
 
@@ -93,7 +93,7 @@ describe("SDKProvider", () => {
     },
   };
 
-  it("Whether it creates an instance of the ABSmartly JS-SDK and an ABSmartly Context", async () => {
+  it("Whether it creates an instance of the ABSmartly JS-SDK and an ABSmartly Context", () => {
     render(
       <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
         <TestComponent />
@@ -107,7 +107,7 @@ describe("SDKProvider", () => {
     expect(mockCreateContext).toHaveBeenLastCalledWith(contextOptions);
   });
 
-  it("Whether it will create an SDK instance with a context that has prefetched context data", async () => {
+  it("Whether it will create an SDK instance with a context that has prefetched context data", () => {
     render(
       <SDKProvider context={mockContext}>
         <TestComponent />
@@ -118,13 +118,65 @@ describe("SDKProvider", () => {
     expect(mockCreateContext).not.toHaveBeenCalled();
   });
 
-  it("Whether useABSmartly throws an error when not used within an SDKProvider", async () => {
+  it("Works when the context is passed in later, when available", async () => {
+    const useFakeHook = () => {
+      const [userId, setUserId] = useState<string | null>(null);
+      const [anonymousId, setAnonymousId] = useState<string | null>(null);
+
+      useEffect(() => {
+        const timer = setTimeout(async () => {
+          setAnonymousId("test-anonymous-id");
+          setUserId("test-user-id");
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, []);
+      return {
+        userId,
+        anonymousId,
+      };
+    };
+
+    const wrapper: FC<PropsWithChildren> = ({ children }) => (
+      <SDKProvider sdkOptions={sdkOptions} context={null}>
+        {children}
+      </SDKProvider>
+    );
+
+    const { result: hookResult } = renderHook(() => useFakeHook(), { wrapper });
+    const { result } = renderHook(() => useABSmartly(), { wrapper });
+
+    expect(hookResult.current.userId).toBe(null);
+    expect(hookResult.current.anonymousId).toBe(null);
+
+    expect(result.current.sdk).toBeDefined();
+    expect(result.current.context).toBeNull();
+
+    const newContextOptions = {
+      units: {
+        userId: hookResult.current.userId ?? "",
+        anonymousId: hookResult.current.anonymousId ?? "",
+      },
+    };
+
+    await result.current.resetContext(newContextOptions);
+
+    await waitFor(async () => {
+      expect(hookResult.current.userId).toBe("test-user-id");
+      expect(hookResult.current.anonymousId).toBe("test-anonymous-id");
+
+      expect(result.current.context).toBeDefined();
+      expect(result.current.context).not.toBeNull();
+    });
+  });
+
+  it("Whether useABSmartly throws an error when not used within an SDKProvider", () => {
     expect(() => renderHook(() => useABSmartly())).toThrow(
       "useABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk",
     );
   });
 
-  it("Whether useABSmartly hook works", async () => {
+  it("Whether useABSmartly hook works", () => {
     const wrapper: FC<PropsWithChildren> = ({ children }) => (
       <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
         {children}
@@ -162,9 +214,7 @@ describe("SDKProvider", () => {
     );
 
     const button = screen.getByText("Reset Context");
-    await act(async () => {
-      fireEvent.click(button);
-    });
+    await userEvent.click(button);
 
     expect(mockCreateContextWith).toHaveBeenCalledTimes(1);
     expect(mockCreateContextWith).toHaveBeenCalledWith(
