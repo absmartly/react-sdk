@@ -10,7 +10,7 @@ import { withABSmartly } from "./hooks/HOCs/withABSmartly";
 import { useABSmartly } from "./hooks/useABSmartly";
 
 import { mergeConfig } from "@absmartly/javascript-sdk";
-import {
+import type {
   ABSmartly,
   ABSmartlyContext,
   ABSmartlySDK,
@@ -18,15 +18,15 @@ import {
 } from "./types";
 
 export * from "@absmartly/javascript-sdk";
-export type { ABSmartly, TreatmentProps, ABSmartlySDK, ABSmartlyContext };
 export {
-  mergeConfig,
   Treatment,
   TreatmentFunction,
   TreatmentVariant,
+  mergeConfig,
   useABSmartly,
-  withABSmartly,
   useTreatment,
+  withABSmartly,
 };
+export type { ABSmartly, ABSmartlyContext, ABSmartlySDK, TreatmentProps };
 
 export default SDKProvider;

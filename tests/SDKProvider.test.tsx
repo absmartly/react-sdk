@@ -6,7 +6,7 @@ import {
   renderHook,
   screen,
 } from "@testing-library/react";
-import React, { FC, PropsWithChildren } from "react";
+import { FC, PropsWithChildren } from "react";
 import { afterEach, describe, expect, it, MockedClass, vi } from "vitest";
 
 import { Context, SDK } from "@absmartly/javascript-sdk";

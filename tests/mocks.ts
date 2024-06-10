@@ -1,5 +1,5 @@
 import { Context } from "@absmartly/javascript-sdk";
-import { Mocked, MockedFunction, vi } from "vitest";
+import { vi, type Mocked, type MockedFunction } from "vitest";
 import { useABSmartly } from "../src/hooks/useABSmartly";
 
 export const mocks = {

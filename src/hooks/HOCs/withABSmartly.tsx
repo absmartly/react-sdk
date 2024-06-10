@@ -1,5 +1,5 @@
-import React, { ComponentType } from "react";
-import { ABSmartly } from "../../types";
+import type { ComponentType } from "react";
+import type { ABSmartly } from "../../types";
 import { _SdkContext } from "../useABSmartly";
 
 interface WithABSmartlyProps {

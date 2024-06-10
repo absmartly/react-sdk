@@ -22,10 +22,10 @@ export type ABSmartly = {
   resetContext: (
     contextRequest: ContextRequestType,
     contextOptions?: ContextOptionsType,
-  ) => void;
+  ) => Promise<void>;
 };
 
-export type ContextRequestType = { units: Record<string, unknown> };
+export type ContextRequestType = { units: Record<string, string | number> };
 
 export type ContextOptionsType = {
   publishDelay?: number;
