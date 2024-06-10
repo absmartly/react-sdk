@@ -1,9 +1,9 @@
-import React, { FC, ReactNode, useState } from "react";
+import { useState, type FC, type ReactNode } from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
 
 import { _SdkContext } from "../../hooks/useABSmartly";
-import {
+import type {
   ABSmartly,
   ABSmartlyContext,
   ContextOptionsType,
@@ -43,7 +43,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
 
   const resetContext = async (
     params: ContextRequestType,
-    contextOptions: ContextOptionsType,
+    contextOptions?: ContextOptionsType,
   ) => {
     try {
       await providedContext.ready();
