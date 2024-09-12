@@ -20,6 +20,7 @@ const mockContext = {
   ready: vi.fn(),
   peek: vi.fn(),
   treatment: vi.fn(),
+  isReady: vi.fn(),
 };
 
 beforeEach(() => {
