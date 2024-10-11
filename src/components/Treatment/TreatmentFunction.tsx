@@ -32,9 +32,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     variables: {},
   });
 
-  const [loading, setLoading] = useState<boolean>(
-    !ensuredContext?.isReady() ?? false,
-  );
+  const [loading, setLoading] = useState<boolean>(!ensuredContext?.isReady());
 
   const getLoadingComponent = () => {
     return loadingComponent != null ? (
