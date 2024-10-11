@@ -1,6 +1,6 @@
 {
   "name": "@absmartly/react-sdk",
-  "version": "1.4.0",
+  "version": "1.4.2-beta.1",
   "homepage": "https://github.com/absmartly/react-sdk#README.md",
   "bugs": "https://github.com/absmartly/react-sdk/issues",
   "keywords": [
