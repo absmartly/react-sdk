@@ -13,6 +13,31 @@ interface TreatmentFunctionProps {
   }): ReactNode;
 }
 
+const getVariantAndVariables = (
+  context: Context,
+  name: string,
+  attributes?: Record<string, unknown>,
+): { variant: number; variables: Record<string, unknown> } => {
+  if (attributes) context.attributes(attributes);
+
+  const variablesArray = Object.keys(context.variableKeys()).map((key) => [
+    key,
+    context.peekVariableValue(key, ""),
+  ]);
+
+  const variablesObject = variablesArray.reduce(
+    (obj, i) => Object.assign(obj, { [i[0]]: i[1] }),
+    {},
+  );
+
+  const treatment = context.treatment(name);
+
+  return {
+    variant: treatment,
+    variables: variablesObject,
+  };
+};
+
 export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   children,
   loadingComponent,
@@ -22,47 +47,39 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 }) => {
   const ensuredContext = context ?? useABSmartly().context;
 
+  // Check if context is already ready (supports SSR)
+  const isContextReady = ensuredContext.isReady();
+
   // State for storing the chosen variant, variables and whether this data
-  // is loading from the server
+  // is loading from the server. If context is ready, initialize with real values (SSR support).
   const [variantAndVariables, setVariantAndVariables] = useState<{
     variant: number | undefined;
     variables: Record<string, unknown>;
-  }>({
-    variant: !loadingComponent ? 0 : undefined,
-    variables: {},
+  }>(() => {
+    if (isContextReady) {
+      return getVariantAndVariables(ensuredContext, name, attributes);
+    }
+    return {
+      variant: !loadingComponent ? 0 : undefined,
+      variables: {},
+    };
   });
 
-  const [loading, setLoading] = useState<boolean>(!ensuredContext.isReady());
+  const [loading, setLoading] = useState<boolean>(!isContextReady);
 
-  // Set variant number and variables in state
+  // Set variant number and variables in state (for client-side updates)
   useEffect(() => {
-    if (attributes) ensuredContext.attributes(attributes);
+    if (isContextReady) return;
 
     ensuredContext
       .ready()
       .then(() => {
-        // Turning the variable keys and values into an array of arrays
-        const variablesArray = Object.keys(ensuredContext.variableKeys()).map(
-          (key) => [key, ensuredContext.peekVariableValue(key, "")],
-        );
-
-        // Converting the array of arrays into a regular object
-        const variablesObject = variablesArray.reduce(
-          (obj, i) => Object.assign(obj, { [i[0]]: i[1] }),
-          {},
-        );
-
-        const treatment = ensuredContext.treatment(name);
-
-        // Setting the state
-        setVariantAndVariables({
-          variant: treatment,
-          variables: variablesObject,
-        });
+        const result = getVariantAndVariables(ensuredContext, name, attributes);
+        setVariantAndVariables(result);
         setLoading(false);
       })
       .catch((e: Error) => console.error(e));
-  }, [context, attributes]);
+  }, [context, attributes, isContextReady]);
 
   if (loading) {
     return loadingComponent != null ? (

@@ -4,11 +4,21 @@ import { useABSmartly } from "./useABSmartly";
 export const useTreatment = (name: string, peek = false) => {
   const { context } = useABSmartly();
 
-  const [variant, setVariant] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Check if context is already ready (supports SSR)
+  const isContextReady = context.isReady();
+
+  const [variant, setVariant] = useState<number | null>(() => {
+    if (isContextReady) {
+      return peek ? context.peek(name) : context.treatment(name);
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!isContextReady);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (isContextReady) return;
+
     const fetchTreatment = async () => {
       try {
         await context.ready();
@@ -23,7 +33,7 @@ export const useTreatment = (name: string, peek = false) => {
     };
 
     fetchTreatment();
-  }, [context, name, peek]);
+  }, [context, name, peek, isContextReady]);
 
   return { variant, loading, error, context };
 };
