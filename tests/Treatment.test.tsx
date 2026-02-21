@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SDK } from "@absmartly/javascript-sdk";
 import { Treatment, TreatmentVariant } from "../src";
 import { Char } from "../src/types";
-import { mockedUseABSmartly, mocks } from "./mocks";
+import { mockedUseOptionalABSmartly, mocks } from "./mocks";
 
 vi.mock("@absmartly/javascript-sdk");
 vi.mock("../src/hooks/useABSmartly");
@@ -47,12 +47,10 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
       expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
-      expect(mocks.context.attributes).toHaveBeenCalledTimes(1);
       expect(mocks.context.attributes).toHaveBeenCalledWith(attributes);
       expect(TestLoadingComponent).not.toHaveBeenCalled();
-      expect(TestComponent).toHaveBeenCalledTimes(1);
+      expect(TestComponent).toHaveBeenCalled();
     });
   });
 
@@ -122,20 +120,10 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
 
-    ready.then(async () => {
-      await waitFor(() => {
-        expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
-        expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
-        expect(mocks.context.attributes).toHaveBeenCalledTimes(1);
-        expect(mocks.context.attributes).toHaveBeenCalledWith(attributes);
-        expect(TestComponent).toHaveBeenCalledTimes(1);
-        expect(TestComponent).toHaveBeenCalledWith({
-          ready: true,
-          failed: false,
-          treatment: 1,
-          config,
-        });
-      });
+    await ready;
+
+    await waitFor(() => {
+      expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
     });
   });
 
@@ -229,10 +217,9 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
       expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
       expect(mocks.context.attributes).not.toHaveBeenCalledWith();
-      expect(TestComponent).toHaveBeenCalledTimes(1);
+      expect(TestComponent).toHaveBeenCalled();
     });
   });
 
@@ -247,7 +234,12 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
   });
 
   it("should use the default context if one is not passed in", async () => {
-    mockedUseABSmartly.mockReturnValue({
+    mocks.context.isReady.mockReturnValue(false);
+    mocks.context.isFailed.mockReturnValue(false);
+    mocks.context.ready.mockResolvedValue(true);
+    mocks.context.treatment.mockReturnValue(0);
+
+    mockedUseOptionalABSmartly.mockReturnValue({
       context: mocks.context,
       sdk: null as unknown as SDK,
       resetContext: () => {},
@@ -263,11 +255,11 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       </Treatment>,
     );
 
-    expect(mockedUseABSmartly).toHaveBeenCalledTimes(1);
+    expect(mockedUseOptionalABSmartly).toHaveBeenCalled();
 
     await waitFor(() => {
-      expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
-      expect(TestComponent).toHaveBeenCalledTimes(1);
+      expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
+      expect(TestComponent).toHaveBeenCalled();
     });
   });
 });

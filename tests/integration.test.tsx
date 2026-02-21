@@ -31,7 +31,7 @@ const createMockContext = (treatment: number, isReady = true) => ({
 
 const mockCreateContext = vi.fn();
 
-(SDK as MockedClass<typeof SDK>).mockImplementation(() => {
+(SDK as MockedClass<typeof SDK>).mockImplementation(function () {
   return {
     createContext: mockCreateContext,
     createContextWith: vi.fn(),

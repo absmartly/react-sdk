@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
     "outDir": "lib/esm",
     "allowJs": true,
     "module": "esnext",
@@ -15,6 +17,10 @@
     "noImplicitThis": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "alwaysStrict": true,
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true
   },

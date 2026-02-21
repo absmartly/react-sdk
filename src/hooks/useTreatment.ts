@@ -19,20 +19,34 @@ export const useTreatment = (name: string, peek = false) => {
   useEffect(() => {
     if (isContextReady) return;
 
+    let cancelled = false;
+
     const fetchTreatment = async () => {
       try {
         await context.ready();
-        const treatment = peek ? context.peek(name) : context.treatment(name);
-        setVariant(treatment);
+        if (!cancelled) {
+          const treatment = peek ? context.peek(name) : context.treatment(name);
+          setVariant(treatment ?? 0);
+          setError(null);
+        }
       } catch (error) {
-        setError(error instanceof Error ? error : new Error(error.toString()));
-        console.error("Failed to get variant: ", error);
+        if (!cancelled) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          setError(err);
+          console.error(`Failed to get treatment "${name}":`, err);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchTreatment();
+
+    return () => {
+      cancelled = true;
+    };
   }, [context, name, peek, isContextReady]);
 
   return { variant, loading, error, context };

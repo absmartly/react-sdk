@@ -1,6 +1,7 @@
 import { Context } from "@absmartly/javascript-sdk";
-import React, { FC, ReactNode, useEffect, useState } from "react";
-import { useABSmartly } from "../../hooks/useABSmartly";
+import React, { FC, ReactNode, useState, useCallback } from "react";
+import { useOptionalABSmartly } from "../../hooks/useABSmartly";
+import { useContextReady } from "../../hooks/useContextReady";
 
 interface TreatmentFunctionProps {
   name: string;
@@ -16,24 +17,18 @@ interface TreatmentFunctionProps {
 const getVariantAndVariables = (
   context: Context,
   name: string,
-  attributes?: Record<string, unknown>,
 ): { variant: number; variables: Record<string, unknown> } => {
-  if (attributes) context.attributes(attributes);
-
-  const variablesArray = Object.keys(context.variableKeys()).map((key) => [
-    key,
-    context.peekVariableValue(key, ""),
-  ]);
-
-  const variablesObject = variablesArray.reduce(
-    (obj, i) => Object.assign(obj, { [i[0]]: i[1] }),
-    {},
+  const variablesObject = Object.fromEntries(
+    Object.keys(context.variableKeys()).map((key) => [
+      key,
+      context.peekVariableValue(key, null),
+    ])
   );
 
   const treatment = context.treatment(name);
 
   return {
-    variant: treatment,
+    variant: treatment ?? 0,
     variables: variablesObject,
   };
 };
@@ -45,7 +40,14 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   name,
   context,
 }) => {
-  const ensuredContext = context ?? useABSmartly().context;
+  const absmartly = useOptionalABSmartly();
+  const ensuredContext = context ?? absmartly?.context;
+
+  if (!ensuredContext) {
+    throw new Error(
+      `TreatmentFunction "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`
+    );
+  }
 
   // Check if context is already ready (supports SSR)
   const isContextReady = ensuredContext.isReady();
@@ -57,7 +59,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     variables: Record<string, unknown>;
   }>(() => {
     if (isContextReady) {
-      return getVariantAndVariables(ensuredContext, name, attributes);
+      return getVariantAndVariables(ensuredContext, name);
     }
     return {
       variant: !loadingComponent ? 0 : undefined,
@@ -65,21 +67,27 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     };
   });
 
-  const [loading, setLoading] = useState<boolean>(!isContextReady);
+  // Set variant number and variables when context is ready
+  const handleContextReady = useCallback(() => {
+    const result = getVariantAndVariables(ensuredContext, name);
+    setVariantAndVariables(result);
+  }, [ensuredContext, name, attributes]);
 
-  // Set variant number and variables in state (for client-side updates)
-  useEffect(() => {
-    if (isContextReady) return;
+  const { loading, error } = useContextReady({
+    context: ensuredContext,
+    name,
+    attributes,
+    onReady: handleContextReady,
+  });
 
-    ensuredContext
-      .ready()
-      .then(() => {
-        const result = getVariantAndVariables(ensuredContext, name, attributes);
-        setVariantAndVariables(result);
-        setLoading(false);
-      })
-      .catch((e: Error) => console.error(e));
-  }, [context, attributes, isContextReady]);
+  if (error) {
+    return (
+      <div role="alert" style={{ padding: '10px', border: '1px solid red', borderRadius: '4px', backgroundColor: '#fee' }}>
+        <strong>Failed to load experiment "{name}":</strong>
+        <p>{error.message}</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return loadingComponent != null ? (

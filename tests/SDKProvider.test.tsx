@@ -27,28 +27,39 @@ const mockContextData = {
 
 const mockContext = {} as Context;
 
-const mockCreateContext = vi.fn().mockImplementation(() => {
+const mockCreateContext = vi.fn().mockImplementation(function () {
   return {
-    ...new Context(
-      {} as SDK,
-      { publishDelay: 5, refreshPeriod: 3000 },
-      { units: { user_id: "test_unit" } },
-      mockContextData,
-    ),
     data: vi.fn().mockReturnValue(mockContextData),
+    isReady: vi.fn().mockReturnValue(true),
+    isFailed: vi.fn().mockReturnValue(false),
+    treatment: vi.fn().mockReturnValue(0),
+    ready: vi.fn().mockResolvedValue(undefined),
+    attributes: vi.fn(),
+    variableKeys: vi.fn().mockReturnValue({}),
+    peekVariableValue: vi.fn(),
+    finalize: vi.fn().mockResolvedValue(undefined),
+    _opts: { publishDelay: 5, refreshPeriod: 3000 },
+    _sdk: {},
   };
 });
 
-const mockCreateContextWith = vi.fn().mockImplementation(() => {
-  return new Context(
-    {} as SDK,
-    { publishDelay: 5, refreshPeriod: 3000 },
-    { units: { user_id: "test_unit" } },
-    mockContextData,
-  );
+const mockCreateContextWith = vi.fn().mockImplementation(function () {
+  return {
+    data: vi.fn().mockReturnValue(mockContextData),
+    isReady: vi.fn().mockReturnValue(true),
+    isFailed: vi.fn().mockReturnValue(false),
+    treatment: vi.fn().mockReturnValue(0),
+    ready: vi.fn().mockResolvedValue(undefined),
+    attributes: vi.fn(),
+    variableKeys: vi.fn().mockReturnValue({}),
+    peekVariableValue: vi.fn(),
+    finalize: vi.fn().mockResolvedValue(undefined),
+    _opts: { publishDelay: 5, refreshPeriod: 3000 },
+    _sdk: {},
+  };
 });
 
-(SDK as MockedClass<typeof SDK>).mockImplementation(() => {
+(SDK as MockedClass<typeof SDK>).mockImplementation(function () {
   return {
     createContext: mockCreateContext,
     createContextWith: mockCreateContextWith,
