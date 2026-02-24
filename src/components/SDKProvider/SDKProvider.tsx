@@ -56,7 +56,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
   const resetContext = useCallback(
     async (
       params: ContextRequestType,
-      contextOptions: ContextOptionsType,
+      contextOptions?: ContextOptionsType,
     ) => {
       try {
         await providedContext.ready();

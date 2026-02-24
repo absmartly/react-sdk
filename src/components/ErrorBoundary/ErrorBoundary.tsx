@@ -1,5 +1,7 @@
 import React, { Component, ReactNode, ErrorInfo } from "react";
 
+declare const process: { env: { NODE_ENV?: string } };
+
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode | ((error: Error, errorInfo: ErrorInfo) => ReactNode);

@@ -21,7 +21,7 @@ const getVariantAndVariables = (
   const variablesObject = Object.fromEntries(
     Object.keys(context.variableKeys()).map((key) => [
       key,
-      context.peekVariableValue(key, null),
+      context.peekVariableValue(key, ""),
     ])
   );
 
