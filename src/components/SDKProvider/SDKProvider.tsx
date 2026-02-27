@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState } from "react";
+import React, { FC, ReactNode, useState, useMemo, useCallback } from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
 
@@ -33,44 +33,64 @@ export const SDKProvider: FC<SDKProviderProps> = ({
   context,
   children,
 }) => {
-  const sdk = context
-    ? context["_sdk"]
-    : new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
+  const [sdk] = useState(() => {
+    if (context) {
+      return context.getSDK();
+    }
+    return new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
+  });
 
   const [providedContext, setProvidedContext] = useState(
     context ? context : sdk.createContext(contextOptions),
   );
 
-  const resetContext = async (
-    params: ContextRequestType,
-    contextOptions: ContextOptionsType,
-  ) => {
-    try {
-      await providedContext.ready();
+  const [contextError, setContextError] = useState<Error | null>(null);
 
-      const contextData = providedContext.data();
-      const oldContextOptions = providedContext._opts;
+  const resetContext = useCallback(
+    async (
+      params: ContextRequestType,
+      contextOptions?: ContextOptionsType,
+    ) => {
+      try {
+        await providedContext.ready();
 
-      const combinedContextOptions = {
-        ...oldContextOptions,
-        ...contextOptions,
-      };
+        const contextData = providedContext.data();
+        const oldContextOptions = providedContext.getOptions();
 
-      await providedContext.finalize();
+        const combinedContextOptions = {
+          ...oldContextOptions,
+          ...contextOptions,
+        };
 
-      setProvidedContext(
-        sdk.createContextWith(params, contextData, combinedContextOptions),
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
+        await providedContext.finalize();
 
-  const value: ABSmartly = {
-    sdk,
-    context: providedContext,
-    resetContext,
-  };
+        const newContext = sdk.createContextWith(
+          params,
+          contextData,
+          combinedContextOptions
+        );
+
+        setProvidedContext(newContext);
+        setContextError(null);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        setContextError(err);
+        console.error("Failed to reset ABSmartly context:", err);
+        throw err;
+      }
+    },
+    [providedContext, sdk]
+  );
+
+  const value = useMemo<ABSmartly>(
+    () => ({
+      sdk,
+      context: providedContext,
+      resetContext,
+      contextError,
+    }),
+    [sdk, providedContext, resetContext, contextError]
+  );
 
   return <_SdkContext.Provider value={value}>{children}</_SdkContext.Provider>;
 };

@@ -1,4 +1,11 @@
-import { Context, SDK } from "@absmartly/javascript-sdk";
+import type { Context, SDK } from "@absmartly/javascript-sdk";
+
+declare module "@absmartly/javascript-sdk" {
+  interface Context {
+    getSDK(): SDK;
+    getOptions(): { publishDelay: number; refreshPeriod: number };
+  }
+}
 
 export type ProdOrDevType = "production" | "development";
 
@@ -22,10 +29,11 @@ export type ABSmartly = {
   resetContext: (
     contextRequest: ContextRequestType,
     contextOptions?: ContextOptionsType,
-  ) => void;
+  ) => Promise<void>;
+  contextError?: Error | null;
 };
 
-export type ContextRequestType = { units: Record<string, unknown> };
+export type ContextRequestType = { units: Record<string, string | number> };
 
 export type ContextOptionsType = {
   publishDelay?: number;
@@ -46,66 +54,4 @@ export type TreatmentProps = {
   variables: Record<string, any>;
 };
 
-export type Char =
-  | "a"
-  | "b"
-  | "c"
-  | "d"
-  | "e"
-  | "f"
-  | "g"
-  | "h"
-  | "i"
-  | "j"
-  | "k"
-  | "l"
-  | "m"
-  | "n"
-  | "o"
-  | "p"
-  | "q"
-  | "r"
-  | "s"
-  | "t"
-  | "u"
-  | "v"
-  | "w"
-  | "x"
-  | "y"
-  | "z"
-  | "A"
-  | "B"
-  | "C"
-  | "D"
-  | "E"
-  | "F"
-  | "G"
-  | "H"
-  | "I"
-  | "J"
-  | "K"
-  | "L"
-  | "M"
-  | "N"
-  | "O"
-  | "P"
-  | "Q"
-  | "R"
-  | "S"
-  | "T"
-  | "U"
-  | "V"
-  | "W"
-  | "X"
-  | "Y"
-  | "Z"
-  | "0"
-  | "1"
-  | "2"
-  | "3"
-  | "4"
-  | "5"
-  | "6"
-  | "7"
-  | "8"
-  | "9";
+export type Char = string | number;
