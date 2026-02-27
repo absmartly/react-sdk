@@ -35,14 +35,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
 }) => {
   const [sdk] = useState(() => {
     if (context) {
-      const privateSdk = (context as any)["_sdk"];
-      if (!privateSdk) {
-        console.warn(
-          "SDKProvider: Unable to access private _sdk property from context. " +
-          "This may indicate a version mismatch with @absmartly/javascript-sdk."
-        );
-      }
-      return privateSdk;
+      return context.getSDK();
     }
     return new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
   });
@@ -62,17 +55,10 @@ export const SDKProvider: FC<SDKProviderProps> = ({
         await providedContext.ready();
 
         const contextData = providedContext.data();
-        const oldContextOptions = (providedContext as any)._opts;
-
-        if (!oldContextOptions) {
-          console.warn(
-            "resetContext: Unable to access private _opts property from context. " +
-            "Using only new contextOptions. This may indicate a version mismatch."
-          );
-        }
+        const oldContextOptions = providedContext.getOptions();
 
         const combinedContextOptions = {
-          ...(oldContextOptions || {}),
+          ...oldContextOptions,
           ...contextOptions,
         };
 

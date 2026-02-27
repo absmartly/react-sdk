@@ -1,5 +1,12 @@
 import type { Context, SDK } from "@absmartly/javascript-sdk";
 
+declare module "@absmartly/javascript-sdk" {
+  interface Context {
+    getSDK(): SDK;
+    getOptions(): { publishDelay: number; refreshPeriod: number };
+  }
+}
+
 export type ProdOrDevType = "production" | "development";
 
 export type SDKOptionsType = {
@@ -26,7 +33,7 @@ export type ABSmartly = {
   contextError?: Error | null;
 };
 
-export type ContextRequestType = { units: Record<string, unknown> };
+export type ContextRequestType = { units: Record<string, string | number> };
 
 export type ContextOptionsType = {
   publishDelay?: number;

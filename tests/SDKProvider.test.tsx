@@ -25,7 +25,11 @@ const mockContextData = {
   experiments: [],
 };
 
-const mockContext = {} as Context;
+const mockContext = {
+  getSDK: vi.fn().mockReturnValue({}),
+} as unknown as Context;
+
+const mockContextOptions = { publishDelay: 5, refreshPeriod: 3000 };
 
 const mockCreateContext = vi.fn().mockImplementation(function () {
   return {
@@ -38,8 +42,8 @@ const mockCreateContext = vi.fn().mockImplementation(function () {
     variableKeys: vi.fn().mockReturnValue({}),
     peekVariableValue: vi.fn(),
     finalize: vi.fn().mockResolvedValue(undefined),
-    _opts: { publishDelay: 5, refreshPeriod: 3000 },
-    _sdk: {},
+    getOptions: vi.fn().mockReturnValue(mockContextOptions),
+    getSDK: vi.fn().mockReturnValue({}),
   };
 });
 
@@ -54,8 +58,8 @@ const mockCreateContextWith = vi.fn().mockImplementation(function () {
     variableKeys: vi.fn().mockReturnValue({}),
     peekVariableValue: vi.fn(),
     finalize: vi.fn().mockResolvedValue(undefined),
-    _opts: { publishDelay: 5, refreshPeriod: 3000 },
-    _sdk: {},
+    getOptions: vi.fn().mockReturnValue(mockContextOptions),
+    getSDK: vi.fn().mockReturnValue({}),
   };
 });
 
