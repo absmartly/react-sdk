@@ -7,6 +7,7 @@ export type SDKOptionsType = {
   apiKey: string;
   environment: string;
   application: string;
+  agent?: string;
   retries?: number;
   timeout?: number;
   eventLogger?: (context: Context, eventName: EventNameType, data: any) => void;

@@ -78,8 +78,8 @@ describe("SDKProvider", () => {
     apiKey: "salkjdhclkjsdbca",
     application: "www",
     environment: "Environment 5",
-    retries: 5,
-    timeout: 3000,
+    retries: 10,
+    timeout: 5000,
     overrides: overrides,
     attributes: attrs,
     data: mockContextData,
@@ -101,10 +101,38 @@ describe("SDKProvider", () => {
     );
 
     expect(SDK).toHaveBeenCalledTimes(1);
-    expect(SDK).toHaveBeenLastCalledWith(sdkOptions);
+    expect(SDK).toHaveBeenLastCalledWith({
+      agent: "absmartly-react-sdk",
+      retries: 10,
+      timeout: 5000,
+      ...sdkOptions,
+    });
 
     expect(mockCreateContext).toHaveBeenCalledTimes(1);
     expect(mockCreateContext).toHaveBeenLastCalledWith(contextOptions);
+  });
+
+  it("should allow the user to override the agent", async () => {
+    const customSdkOptions = {
+      ...sdkOptions,
+      agent: "custom-agent",
+    };
+
+    render(
+      <SDKProvider
+        sdkOptions={customSdkOptions}
+        contextOptions={contextOptions}
+      >
+        <TestComponent />
+      </SDKProvider>,
+    );
+
+    expect(SDK).toHaveBeenCalledTimes(1);
+    expect(SDK).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        agent: "custom-agent",
+      }),
+    );
   });
 
   it("Whether it will create an SDK instance with a context that has prefetched context data", async () => {
@@ -174,6 +202,50 @@ describe("SDKProvider", () => {
         publishDelay: 5000,
         refreshPeriod: 5000,
       },
+    );
+  });
+});
+
+describe("SDKProvider React Native agent", () => {
+  const originalProduct = navigator.product;
+
+  afterEach(() => {
+    Object.defineProperty(navigator, "product", {
+      value: originalProduct,
+      configurable: true,
+    });
+  });
+
+  it("should use absmartly-react-native-sdk agent when navigator.product is ReactNative", async () => {
+    Object.defineProperty(navigator, "product", {
+      value: "ReactNative",
+      configurable: true,
+    });
+
+    vi.resetModules();
+
+    const { SDKProvider: RNSDKProvider } = await import(
+      "../src/components/SDKProvider"
+    );
+
+    render(
+      <RNSDKProvider
+        sdkOptions={{
+          endpoint: "https://sandbox.absmartly.io/v1",
+          apiKey: "test",
+          application: "www",
+          environment: "test",
+        }}
+        contextOptions={{ units: { user_id: "test" } }}
+      >
+        <div />
+      </RNSDKProvider>,
+    );
+
+    expect(SDK).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        agent: "absmartly-react-native-sdk",
+      }),
     );
   });
 });

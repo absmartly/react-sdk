@@ -11,6 +11,13 @@ import {
   SDKOptionsType,
 } from "../../types";
 
+const isReactNative =
+  typeof navigator !== "undefined" && navigator.product === "ReactNative";
+
+const SDK_AGENT = isReactNative
+  ? "absmartly-react-native-sdk"
+  : "absmartly-react-sdk";
+
 type SDKProviderNoContext = {
   sdkOptions: SDKOptionsType;
   context?: never;
@@ -35,7 +42,12 @@ export const SDKProvider: FC<SDKProviderProps> = ({
 }) => {
   const sdk = context
     ? context["_sdk"]
-    : new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
+    : new absmartly.SDK({
+        agent: SDK_AGENT,
+        retries: 5,
+        timeout: 3000,
+        ...sdkOptions,
+      });
 
   const [providedContext, setProvidedContext] = useState(
     context ? context : sdk.createContext(contextOptions),
