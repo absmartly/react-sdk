@@ -1,41 +1,67 @@
-# Contributing to the A/B Smartly JavaScript SDK
+# Contributing to the ABsmartly React SDK
 
-The A/B Smartly JavaScript SDK is an open source project and we welcome your feedback and contributions.
-The information below describes how to build and test the project, and how to submit a pull request.
+The ABsmartly React SDK is an open-source project, and we welcome your
+feedback and contributions. This guide provides information on how to build
+and test the project, and how to submit a pull request.
 
 ## Development
 
-### Development process
+### Development Process
 
-1. Fork the repository and create a topic branch from `main` branch. Please use a descriptive name for your branch.
-2. While developing, use descriptive messages in your commits. Avoid short or meaningless sentences like: "fix bug".
-3. Make sure to add tests for both positive and negative cases.
-4. Run the linter script of the project and fix any issues you find.
-5. Run the build script and make sure it runs with no errors.
-6. Run all tests and make sure there are no failures.
-7. `git push` your changes to GitHub within your topic branch.
-8. Open a Pull Request from your forked repo and into the `main` branch of the original repository.
-9. When creating your PR, please fill out all the fields of the PR template, as applicable, for the project.
-10. Check for conflicts once the pull request is created to make sure your PR can be merged cleanly into `main`.
-11. Keep an eye out for any feedback or comments from A/B Smartly's SDK team.
+1. **Fork and Branch**: Fork the repository and create a topic branch from the
+   `main` branch. Use a descriptive name for your branch.
+2. **Commit Messages**: Use descriptive commit messages. Avoid short or vague
+   messages like "fix bug".
+3. **Testing**: Add tests for both positive and negative cases to ensure
+   comprehensive coverage.
+4. **Linting**: Run the linter script and fix any issues. This helps maintain
+   code quality and consistency.
+5. **Building**: Run the build script to ensure it completes without errors.
+6. **Testing**: Run all tests to ensure there are no failures.
+7. **Push Changes**: Push your changes to GitHub in your topic branch.
+8. **Pull Request**: Open a pull request from your forked repo into the `main`
+   branch of the original repository.
+9. **PR Template**: Fill out all applicable fields in the pull request template.
+10. **Conflict Check**: Ensure there are no conflicts with the `main` branch
+    when creating the pull request.
+11. **Feedback**: Monitor your pull request for any feedback or comments from
+    the ABsmartly SDK team.
 
 ### Building the SDK
 
-For widespread use of the SDK with different environments and module formats, we have these different builds:
+The SDK supports different environments and module formats. The available
+builds are:
 
-- An ESM build
-- A **CommonJS** modules compatible build.
+- ESM build
+- CommonJS modules compatible build
 
-The different builds can be generated all at once with the command `npm run build`. Refer to [package.json](package.json) for more insight on the build scripts.
+Generate all builds with the command:
 
-### Running tests
+```bash
+npm run build
+```
 
-The project includes unit tests for both browser and Node.js environments.
+Refer to the [package.json](package.json) file for more details on the build scripts.
 
-All tests can be run at once with the command `npm run test`.
+### Running Tests
 
-For additional testing scripts or to get more insight on how these work, please refer to our [package.json](package.json) file.
+The project includes unit tests for both client and server-side environments.
+Run all tests with the command:
 
-# Contact
+```bash
+npm run test
+```
 
-If you have any other questions or need to contact us directly we can be reached at sdk@absmartly.com
+For additional testing scripts and more information on how they work, refer to
+the [package.json](package.json) file.
+
+## Contact
+
+If you have any questions or need further assistance, you can reach us at
+<support@absmartly.com> or on your company's dedicated ABsmartly Slack Connect
+channel.
+
+---
+
+Thank you for contributing to the ABsmartly React SDK! Your efforts help us
+improve and grow our open-source community.
