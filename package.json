@@ -13,8 +13,7 @@
     "ab",
     "a/b",
     "cro",
-    "vue",
-    "vue2"
+    "react"
   ],
   "license": "Apache-2.0",
   "main": "./lib/cjs/index.js",

@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Context } from "@absmartly/javascript-sdk";
 
 interface UseContextReadyOptions {
-  context: Context;
+  context: Context | null;
   name: string;
   attributes?: Record<string, unknown>;
   onReady?: (context: Context) => void;
@@ -19,23 +19,30 @@ export const useContextReady = ({
   attributes,
   onReady,
 }: UseContextReadyOptions): UseContextReadyResult => {
-  const isContextReady = context.isReady();
+  const isContextReady = context?.isReady() ?? false;
   const [loading, setLoading] = useState<boolean>(!isContextReady);
   const [error, setError] = useState<Error | null>(null);
 
-  const [initiallyReady] = useState(isContextReady);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+
+  const attributesRef = useRef(attributes);
+  attributesRef.current = attributes;
 
   useEffect(() => {
+    if (!context) return;
+
     let cancelled = false;
 
-    if (attributes) {
-      context.attributes(attributes);
+    if (attributesRef.current) {
+      context.attributes(attributesRef.current);
     }
 
     if (isContextReady) {
-      if (!initiallyReady && onReady) {
-        onReady(context);
+      if (onReadyRef.current) {
+        onReadyRef.current(context);
       }
+      setLoading(false);
       return;
     }
 
@@ -43,8 +50,11 @@ export const useContextReady = ({
       .ready()
       .then(() => {
         if (!cancelled) {
-          if (onReady) {
-            onReady(context);
+          if (attributesRef.current) {
+            context.attributes(attributesRef.current);
+          }
+          if (onReadyRef.current) {
+            onReadyRef.current(context);
           }
           setLoading(false);
           setError(null);
@@ -62,7 +72,7 @@ export const useContextReady = ({
     return () => {
       cancelled = true;
     };
-  }, [context, attributes, name, isContextReady, onReady]);
+  }, [context, name, isContextReady]);
 
   return { loading, error };
 };

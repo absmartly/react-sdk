@@ -7,8 +7,6 @@ declare module "@absmartly/javascript-sdk" {
   }
 }
 
-export type ProdOrDevType = "production" | "development";
-
 export type SDKOptionsType = {
   endpoint: string;
   apiKey: string;
@@ -33,7 +31,7 @@ export type ABSmartly = {
   contextError?: Error | null;
 };
 
-export type ContextRequestType = { units: Record<string, string | number> };
+export type ContextRequestType = { units: Record<string, unknown> };
 
 export type ContextOptionsType = {
   publishDelay?: number;
@@ -54,4 +52,4 @@ export type TreatmentProps = {
   variables: Record<string, any>;
 };
 
-export type Char = string | number;
+export type Char = string;

@@ -14,7 +14,14 @@ export function withABSmartly<
   const ComponentWithABSmartly = (props: Omit<P, keyof WithABSmartlyProps>) => {
     return (
       <_SdkContext.Consumer>
-        {(value) => <Component {...(props as P)} absmartly={value} />}
+        {(value) => {
+          if (!value) {
+            throw new Error(
+              "withABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk"
+            );
+          }
+          return <Component {...(props as P)} absmartly={value} />;
+        }}
       </_SdkContext.Consumer>
     );
   };

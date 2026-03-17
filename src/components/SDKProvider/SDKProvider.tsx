@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState, useMemo, useCallback } from "react";
+import React, { FC, ReactNode, useState, useMemo, useCallback, useRef } from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
 
@@ -35,7 +35,9 @@ export const SDKProvider: FC<SDKProviderProps> = ({
 }) => {
   const [sdk] = useState(() => {
     if (context) {
-      return context.getSDK();
+      return typeof context.getSDK === "function"
+        ? context.getSDK()
+        : (context as any)["_sdk"];
     }
     return new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
   });
@@ -46,23 +48,29 @@ export const SDKProvider: FC<SDKProviderProps> = ({
 
   const [contextError, setContextError] = useState<Error | null>(null);
 
+  const contextRef = useRef(providedContext);
+  contextRef.current = providedContext;
+
   const resetContext = useCallback(
     async (
       params: ContextRequestType,
       contextOptions?: ContextOptionsType,
     ) => {
       try {
-        await providedContext.ready();
+        const ctx = contextRef.current;
+        await ctx.ready();
 
-        const contextData = providedContext.data();
-        const oldContextOptions = providedContext.getOptions();
+        const contextData = ctx.data();
+        const oldContextOptions = typeof ctx.getOptions === "function"
+          ? ctx.getOptions()
+          : (ctx as any)._opts;
 
         const combinedContextOptions = {
           ...oldContextOptions,
           ...contextOptions,
         };
 
-        await providedContext.finalize();
+        await ctx.finalize();
 
         const newContext = sdk.createContextWith(
           params,
@@ -79,7 +87,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
         throw err;
       }
     },
-    [providedContext, sdk]
+    [sdk]
   );
 
   const value = useMemo<ABSmartly>(

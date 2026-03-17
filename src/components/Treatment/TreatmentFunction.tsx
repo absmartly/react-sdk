@@ -1,5 +1,8 @@
 import { Context } from "@absmartly/javascript-sdk";
 import React, { FC, ReactNode, useState, useCallback } from "react";
+
+declare const process: { env: { NODE_ENV?: string } };
+
 import { useOptionalABSmartly } from "../../hooks/useABSmartly";
 import { useContextReady } from "../../hooks/useContextReady";
 
@@ -41,24 +44,13 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   context,
 }) => {
   const absmartly = useOptionalABSmartly();
-  const ensuredContext = context ?? absmartly?.context;
+  const ensuredContext = context ?? absmartly?.context ?? null;
 
-  if (!ensuredContext) {
-    throw new Error(
-      `TreatmentFunction "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`
-    );
-  }
-
-  // Check if context is already ready (supports SSR)
-  const isContextReady = ensuredContext.isReady();
-
-  // State for storing the chosen variant, variables and whether this data
-  // is loading from the server. If context is ready, initialize with real values (SSR support).
   const [variantAndVariables, setVariantAndVariables] = useState<{
     variant: number | undefined;
     variables: Record<string, unknown>;
   }>(() => {
-    if (isContextReady) {
+    if (ensuredContext?.isReady()) {
       return getVariantAndVariables(ensuredContext, name);
     }
     return {
@@ -67,11 +59,12 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     };
   });
 
-  // Set variant number and variables when context is ready
   const handleContextReady = useCallback(() => {
-    const result = getVariantAndVariables(ensuredContext, name);
-    setVariantAndVariables(result);
-  }, [ensuredContext, name, attributes]);
+    if (ensuredContext) {
+      const result = getVariantAndVariables(ensuredContext, name);
+      setVariantAndVariables(result);
+    }
+  }, [ensuredContext, name]);
 
   const { loading, error } = useContextReady({
     context: ensuredContext,
@@ -80,11 +73,18 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     onReady: handleContextReady,
   });
 
+  if (!ensuredContext) {
+    console.warn(
+      `TreatmentFunction "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`
+    );
+    return null;
+  }
+
   if (error) {
     return (
       <div role="alert" style={{ padding: '10px', border: '1px solid red', borderRadius: '4px', backgroundColor: '#fee' }}>
-        <strong>Failed to load experiment "{name}":</strong>
-        <p>{error.message}</p>
+        <strong>Failed to load experiment "{name}"</strong>
+        {process.env.NODE_ENV === "development" && <p>{error.message}</p>}
       </div>
     );
   }

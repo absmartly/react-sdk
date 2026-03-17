@@ -66,9 +66,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <h2 style={{ margin: "0 0 10px 0", color: "#d32f2f" }}>
             ABSmartly Error
           </h2>
-          <p style={{ margin: "0 0 10px 0", fontWeight: "bold" }}>
-            {this.state.error.message}
-          </p>
+          {process.env.NODE_ENV === "development" ? (
+            <p style={{ margin: "0 0 10px 0", fontWeight: "bold" }}>
+              {this.state.error.message}
+            </p>
+          ) : (
+            <p style={{ margin: "0 0 10px 0" }}>Something went wrong.</p>
+          )}
           {process.env.NODE_ENV === "development" && this.state.errorInfo && (
             <details style={{ marginTop: "10px" }}>
               <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
