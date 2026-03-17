@@ -1,5 +1,5 @@
 import { Context } from "@absmartly/javascript-sdk";
-import React, { FC, ReactNode, useEffect, useState } from "react";
+import { useEffect, useState, type FC, type ReactNode } from "react";
 import { useABSmartly } from "../../hooks/useABSmartly";
 
 interface TreatmentFunctionProps {
@@ -34,6 +34,14 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
   const [loading, setLoading] = useState<boolean>(!ensuredContext.isReady());
 
+  const getLoadingComponent = () => {
+    return loadingComponent != null ? (
+      <>{loadingComponent}</>
+    ) : (
+      <>{children({ ...variantAndVariables, variant: 0 })}</>
+    );
+  };
+
   // Set variant number and variables in state
   useEffect(() => {
     if (attributes) ensuredContext.attributes(attributes);
@@ -47,10 +55,11 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
         );
 
         // Converting the array of arrays into a regular object
-        const variablesObject = variablesArray.reduce(
-          (obj, i) => Object.assign(obj, { [i[0]]: i[1] }),
-          {},
-        );
+        const variablesObject = variablesArray.reduce((obj, i) => {
+          const key = i[0];
+
+          return Object.assign(obj, { [key != null ? key : ""]: i[1] });
+        }, {});
 
         const treatment = ensuredContext.treatment(name);
 
@@ -65,11 +74,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   }, [context, attributes]);
 
   if (loading) {
-    return loadingComponent != null ? (
-      <>{loadingComponent}</>
-    ) : (
-      <>{children({ ...variantAndVariables, variant: 0 })}</>
-    );
+    return getLoadingComponent();
   }
 
   return (

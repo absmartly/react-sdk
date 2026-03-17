@@ -1,7 +1,6 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
-import { vi, it, expect, describe, afterEach } from "vitest";
-import React from "react";
-import { SDK, TreatmentProps } from "../src";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SDK, type TreatmentProps } from "../src";
 import { TreatmentFunction } from "../src/components/Treatment/TreatmentFunction";
 import { mockedUseABSmartly, mocks } from "./mocks";
 
@@ -201,7 +200,7 @@ describe("TreatmentFunction Component", () => {
     mockedUseABSmartly.mockReturnValue({
       context: mocks.context,
       sdk: null as unknown as SDK,
-      resetContext: () => {},
+      resetContext: async () => {},
     });
 
     const TestComponent = vi.fn();

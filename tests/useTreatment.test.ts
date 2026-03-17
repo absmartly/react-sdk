@@ -1,13 +1,13 @@
+import { Context, SDK } from "@absmartly/javascript-sdk";
 import {
-  expect,
-  describe,
-  beforeEach,
   afterEach,
+  beforeEach,
+  describe,
+  expect,
   it,
   vi,
-  MockedFunction,
+  type MockedFunction,
 } from "vitest";
-import { Context, SDK } from "@absmartly/javascript-sdk";
 import { useABSmartly, useTreatment } from "../src";
 
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
@@ -26,7 +26,7 @@ beforeEach(() => {
   mockedUseABSmartly.mockReturnValue({
     context: mockContext as unknown as Context,
     sdk: null as unknown as SDK,
-    resetContext: () => {},
+    resetContext: async () => {},
   });
 });
 

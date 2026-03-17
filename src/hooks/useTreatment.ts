@@ -15,7 +15,15 @@ export const useTreatment = (name: string, peek = false) => {
         const treatment = peek ? context.peek(name) : context.treatment(name);
         setVariant(treatment);
       } catch (error) {
-        setError(error instanceof Error ? error : new Error(error.toString()));
+        setError(
+          error instanceof Error
+            ? error
+            : new Error(
+                typeof error === "string"
+                  ? error.toString()
+                  : "There was an error when readying the context",
+              ),
+        );
         console.error("Failed to get variant: ", error);
       } finally {
         setLoading(false);

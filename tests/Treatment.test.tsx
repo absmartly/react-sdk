@@ -1,10 +1,9 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
-import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SDK } from "@absmartly/javascript-sdk";
 import { Treatment, TreatmentVariant } from "../src";
-import { Char } from "../src/types";
+import type { Char } from "../src/types";
 import { mockedUseABSmartly, mocks } from "./mocks";
 
 vi.mock("@absmartly/javascript-sdk");
@@ -250,7 +249,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     mockedUseABSmartly.mockReturnValue({
       context: mocks.context,
       sdk: null as unknown as SDK,
-      resetContext: () => {},
+      resetContext: async () => {},
     });
 
     const TestComponent = vi.fn();

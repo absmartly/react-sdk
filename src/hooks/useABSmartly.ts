@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { ABSmartly } from "../types";
+import { type ABSmartly } from "../types";
 
 export const _SdkContext = createContext<ABSmartly | null>(null);
 
