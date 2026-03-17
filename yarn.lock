@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@absmartly/javascript-sdk@^1.13.0":
-  version "1.13.1"
-  resolved "https://registry.yarnpkg.com/@absmartly/javascript-sdk/-/javascript-sdk-1.13.1.tgz#1ab36024b7c3b95a3a3314784e3d47dbebfcae2c"
-  integrity sha512-u6Ga8QFZ2tTElj7Picrm8ZAONog9E8X0fW2Mdl+ep9O/y2x2KmAKioVikvAx9NQH4vTTkFAetcvidWJgxhu9nA==
+"@absmartly/javascript-sdk@^1.13.4":
+  version "1.13.4"
+  resolved "https://registry.yarnpkg.com/@absmartly/javascript-sdk/-/javascript-sdk-1.13.4.tgz#83847f54bb2bf4d414e0530b2b47c1ffb62c2960"
+  integrity sha512-uNENphAJQ2iq8J1U8Eanf/rMeQ9p7DvnEWlHPr4doWWLRoaLiWRo4Ke9j9oO0WTsVt+Lz3r/HCEkyqVP6Q9BHQ==
   dependencies:
     core-js "^3.20.0"
     node-fetch "^2.6.7"

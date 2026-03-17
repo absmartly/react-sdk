@@ -51,7 +51,7 @@
     "react-dom": ">=16.8.0"
   },
   "dependencies": {
-    "@absmartly/javascript-sdk": "^1.13.0",
+    "@absmartly/javascript-sdk": "^1.13.4",
     "core-js": "^3.26.0"
   },
   "publishConfig": {
