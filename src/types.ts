@@ -1,12 +1,5 @@
 import type { Context, SDK } from "@absmartly/javascript-sdk";
 
-declare module "@absmartly/javascript-sdk" {
-  interface Context {
-    getSDK(): SDK;
-    getOptions(): { publishDelay: number; refreshPeriod: number };
-  }
-}
-
 export type SDKOptionsType = {
   endpoint: string;
   apiKey: string;

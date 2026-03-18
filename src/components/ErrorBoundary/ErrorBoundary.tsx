@@ -4,7 +4,7 @@ declare const process: { env: { NODE_ENV?: string } };
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode | ((error: Error, errorInfo: ErrorInfo) => ReactNode);
+  fallback?: ReactNode | ((error: Error, errorInfo: ErrorInfo | null) => ReactNode);
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError && this.state.error) {
       if (this.props.fallback) {
         if (typeof this.props.fallback === "function") {
-          return this.props.fallback(this.state.error, this.state.errorInfo!);
+          return this.props.fallback(this.state.error, this.state.errorInfo);
         }
         return this.props.fallback;
       }

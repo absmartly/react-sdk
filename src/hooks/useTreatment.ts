@@ -9,7 +9,8 @@ export const useTreatment = (name: string, peek = false) => {
 
   const [variant, setVariant] = useState<number | null>(() => {
     if (isContextReady) {
-      return peek ? context.peek(name) : context.treatment(name);
+      const treatment = peek ? context.peek(name) : context.treatment(name);
+      return treatment ?? 0;
     }
     return null;
   });

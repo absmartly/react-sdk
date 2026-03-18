@@ -35,9 +35,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
 }) => {
   const [sdk] = useState(() => {
     if (context) {
-      return typeof context.getSDK === "function"
-        ? context.getSDK()
-        : (context as any)["_sdk"];
+      return (context as any)["_sdk"];
     }
     return new absmartly.SDK({ retries: 5, timeout: 3000, ...sdkOptions });
   });
@@ -61,9 +59,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
         await ctx.ready();
 
         const contextData = ctx.data();
-        const oldContextOptions = typeof ctx.getOptions === "function"
-          ? ctx.getOptions()
-          : (ctx as any)._opts;
+        const oldContextOptions = (ctx as any)._opts;
 
         const combinedContextOptions = {
           ...oldContextOptions,
