@@ -1,10 +1,4 @@
-import {
-  act,
-  cleanup,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi, MockedClass } from "vitest";
 
@@ -36,7 +30,7 @@ describe("Fix #1: Rules of Hooks - Treatment renders without context", () => {
 
     expect(container.innerHTML).toBe("");
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("No context available")
+      expect.stringContaining("No context available"),
     );
     warnSpy.mockRestore();
   });
@@ -51,7 +45,7 @@ describe("Fix #1: Rules of Hooks - Treatment renders without context", () => {
             <p>Control</p>
           </TreatmentVariant>
         </Treatment>,
-      )
+      ),
     ).not.toThrow();
   });
 });
@@ -68,7 +62,7 @@ describe("Fix #1: Rules of Hooks - TreatmentFunction renders without context", (
 
     expect(container.innerHTML).toBe("");
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("No context available")
+      expect.stringContaining("No context available"),
     );
     warnSpy.mockRestore();
   });
@@ -81,7 +75,7 @@ describe("Fix #1: Rules of Hooks - TreatmentFunction renders without context", (
         <TreatmentFunction name="test_exp">
           {({ variant }: TreatmentProps) => <p>Variant {variant}</p>}
         </TreatmentFunction>,
-      )
+      ),
     ).not.toThrow();
   });
 });

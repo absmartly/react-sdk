@@ -1,4 +1,11 @@
-import React, { FC, ReactNode, useState, useCallback, useMemo, useRef } from "react";
+import React, {
+  FC,
+  ReactNode,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 
 declare const process: { env: { NODE_ENV?: string } };
 
@@ -33,7 +40,7 @@ export const Treatment: FC<TreatmentProps> = ({
       React.Children.map(children, (child) => {
         if (!React.isValidElement(child)) {
           console.warn(
-            `Treatment "${name}": Non-element child detected. Using variant 0.`
+            `Treatment "${name}": Non-element child detected. Using variant 0.`,
           );
           return { variant: 0 };
         }
@@ -41,14 +48,14 @@ export const Treatment: FC<TreatmentProps> = ({
         const variant = (child.props as any).variant;
         if (variant === undefined) {
           console.warn(
-            `Treatment "${name}": Child missing "variant" prop. Using variant 0.`
+            `Treatment "${name}": Child missing "variant" prop. Using variant 0.`,
           );
           return { variant: 0 };
         }
 
         return { variant };
       }),
-    [children, name]
+    [children, name],
   );
 
   const childrenInfoRef = useRef(childrenInfo);
@@ -61,7 +68,9 @@ export const Treatment: FC<TreatmentProps> = ({
       const info = childrenInfoRef.current;
 
       if (!info || info.length === 0) {
-        console.warn(`Treatment "${name}": No children available. Defaulting to variant 0.`);
+        console.warn(
+          `Treatment "${name}": No children available. Defaulting to variant 0.`,
+        );
         return 0;
       }
 
@@ -71,14 +80,14 @@ export const Treatment: FC<TreatmentProps> = ({
 
       if (index === -1) {
         console.warn(
-          `Treatment "${name}": No child found matching variant ${targetVariant}. Falling back to first child (variant 0).`
+          `Treatment "${name}": No child found matching variant ${targetVariant}. Falling back to first child (variant 0).`,
         );
         return 0;
       }
 
       return index;
     },
-    [name]
+    [name],
   );
 
   const [selectedTreatment, setSelectedTreatment] = useState(() =>
@@ -102,7 +111,7 @@ export const Treatment: FC<TreatmentProps> = ({
 
   if (!ensuredContext) {
     console.warn(
-      `Treatment "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`
+      `Treatment "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`,
     );
     return null;
   }
@@ -112,7 +121,15 @@ export const Treatment: FC<TreatmentProps> = ({
       return <>{errorComponent}</>;
     }
     return (
-      <div role="alert" style={{ padding: '10px', border: '1px solid red', borderRadius: '4px', backgroundColor: '#fee' }}>
+      <div
+        role="alert"
+        style={{
+          padding: "10px",
+          border: "1px solid red",
+          borderRadius: "4px",
+          backgroundColor: "#fee",
+        }}
+      >
         <strong>Failed to load experiment "{name}"</strong>
         {process.env.NODE_ENV === "development" && <p>{error.message}</p>}
       </div>

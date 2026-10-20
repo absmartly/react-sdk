@@ -17,7 +17,7 @@ export function withABSmartly<
         {(value) => {
           if (!value) {
             throw new Error(
-              "withABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk"
+              "withABSmartly must be used within an SDKProvider. https://docs.absmartly.com/docs/SDK-Documentation/getting-started#import-and-initialize-the-sdk",
             );
           }
           return <Component {...(props as P)} absmartly={value} />;

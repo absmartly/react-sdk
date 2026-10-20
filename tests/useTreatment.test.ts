@@ -133,14 +133,11 @@ describe("useTreatment", () => {
 
   it("should update variant when experiment name changes", async () => {
     mockContext.ready.mockResolvedValue(undefined);
-    mockContext.treatment
-      .mockReturnValueOnce(1)
-      .mockReturnValueOnce(2);
+    mockContext.treatment.mockReturnValueOnce(1).mockReturnValueOnce(2);
 
-    const { result, rerender } = renderHook(
-      ({ name }) => useTreatment(name),
-      { initialProps: { name: "experiment-1" } },
-    );
+    const { result, rerender } = renderHook(({ name }) => useTreatment(name), {
+      initialProps: { name: "experiment-1" },
+    });
 
     await waitFor(() => {
       expect(result.current.variant).toBe(1);
@@ -181,7 +178,9 @@ describe("useTreatment", () => {
       resetContext: () => {},
     });
 
-    const { result, rerender } = renderHook(() => useTreatment("experiment-name"));
+    const { result, rerender } = renderHook(() =>
+      useTreatment("experiment-name"),
+    );
 
     await waitFor(() => {
       expect(result.current.variant).toBe(1);

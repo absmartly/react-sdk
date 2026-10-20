@@ -5,7 +5,12 @@ import { afterEach, describe, expect, it, vi, MockedClass } from "vitest";
 import { Context, SDK } from "@absmartly/javascript-sdk";
 
 import { SDKProvider } from "../src/components/SDKProvider";
-import { Treatment, TreatmentVariant, TreatmentFunction, TreatmentProps } from "../src";
+import {
+  Treatment,
+  TreatmentVariant,
+  TreatmentFunction,
+  TreatmentProps,
+} from "../src";
 
 vi.mock("@absmartly/javascript-sdk");
 
@@ -60,7 +65,10 @@ describe("Integration Tests", () => {
 
       render(
         <div>
-          <Treatment name="header_experiment" context={context1 as unknown as Context}>
+          <Treatment
+            name="header_experiment"
+            context={context1 as unknown as Context}
+          >
             <TreatmentVariant variant="0">
               <div data-testid="header-control">Header Control</div>
             </TreatmentVariant>
@@ -69,7 +77,10 @@ describe("Integration Tests", () => {
             </TreatmentVariant>
           </Treatment>
 
-          <Treatment name="button_experiment" context={context2 as unknown as Context}>
+          <Treatment
+            name="button_experiment"
+            context={context2 as unknown as Context}
+          >
             <TreatmentVariant variant="0">
               <button data-testid="button-control">Buy Now</button>
             </TreatmentVariant>
@@ -81,7 +92,10 @@ describe("Integration Tests", () => {
             </TreatmentVariant>
           </Treatment>
 
-          <Treatment name="footer_experiment" context={context3 as unknown as Context}>
+          <Treatment
+            name="footer_experiment"
+            context={context3 as unknown as Context}
+          >
             <TreatmentVariant variant="0">
               <footer data-testid="footer-control">Simple Footer</footer>
             </TreatmentVariant>
@@ -108,14 +122,20 @@ describe("Integration Tests", () => {
       const innerContext = createMockContext(0);
 
       render(
-        <Treatment name="outer_experiment" context={outerContext as unknown as Context}>
+        <Treatment
+          name="outer_experiment"
+          context={outerContext as unknown as Context}
+        >
           <TreatmentVariant variant="0">
             <div data-testid="outer-control">Outer Control</div>
           </TreatmentVariant>
           <TreatmentVariant variant="1">
             <div data-testid="outer-variant">
               <span>Outer Variant</span>
-              <Treatment name="inner_experiment" context={innerContext as unknown as Context}>
+              <Treatment
+                name="inner_experiment"
+                context={innerContext as unknown as Context}
+              >
                 <TreatmentVariant variant="0">
                   <span data-testid="inner-control">Inner Control</span>
                 </TreatmentVariant>
@@ -143,8 +163,13 @@ describe("Integration Tests", () => {
       const context = createMockContext(1);
 
       render(
-        <Suspense fallback={<div data-testid="suspense-fallback">Loading...</div>}>
-          <Treatment name="test_experiment" context={context as unknown as Context}>
+        <Suspense
+          fallback={<div data-testid="suspense-fallback">Loading...</div>}
+        >
+          <Treatment
+            name="test_experiment"
+            context={context as unknown as Context}
+          >
             <TreatmentVariant variant="0">
               <div data-testid="control">Control Content</div>
             </TreatmentVariant>
@@ -187,8 +212,13 @@ describe("Integration Tests", () => {
       const context = createMockContext(1);
 
       render(
-        <ErrorBoundary fallback={<div data-testid="error-fallback">Error occurred</div>}>
-          <Treatment name="test_experiment" context={context as unknown as Context}>
+        <ErrorBoundary
+          fallback={<div data-testid="error-fallback">Error occurred</div>}
+        >
+          <Treatment
+            name="test_experiment"
+            context={context as unknown as Context}
+          >
             <TreatmentVariant variant="0">
               <div data-testid="control">Control</div>
             </TreatmentVariant>
@@ -212,7 +242,10 @@ describe("Integration Tests", () => {
       const context = createMockContext(2);
 
       render(
-        <TreatmentFunction name="pricing_experiment" context={context as unknown as Context}>
+        <TreatmentFunction
+          name="pricing_experiment"
+          context={context as unknown as Context}
+        >
           {({ variant }: TreatmentProps) => (
             <div data-testid="pricing">
               {variant === 0 && <span>Basic: $9.99</span>}
@@ -224,7 +257,9 @@ describe("Integration Tests", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("pricing")).toHaveTextContent("Enterprise: $49.99");
+        expect(screen.getByTestId("pricing")).toHaveTextContent(
+          "Enterprise: $49.99",
+        );
       });
     });
 
@@ -232,7 +267,10 @@ describe("Integration Tests", () => {
       const context = createMockContext(1);
 
       render(
-        <TreatmentFunction name="feature_experiment" context={context as unknown as Context}>
+        <TreatmentFunction
+          name="feature_experiment"
+          context={context as unknown as Context}
+        >
           {({ variant, variables }: TreatmentProps) => (
             <div>
               <span data-testid="variant-value">{variant}</span>
@@ -244,7 +282,9 @@ describe("Integration Tests", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("variant-value")).toHaveTextContent("1");
-        expect(screen.getByTestId("variables-type")).toHaveTextContent("object");
+        expect(screen.getByTestId("variables-type")).toHaveTextContent(
+          "object",
+        );
       });
     });
   });

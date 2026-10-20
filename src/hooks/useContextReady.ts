@@ -29,6 +29,8 @@ export const useContextReady = ({
   const attributesRef = useRef(attributes);
   attributesRef.current = attributes;
 
+  const attributesKey = attributes ? JSON.stringify(attributes) : "";
+
   useEffect(() => {
     if (!context) return;
 
@@ -72,7 +74,7 @@ export const useContextReady = ({
     return () => {
       cancelled = true;
     };
-  }, [context, name, isContextReady]);
+  }, [context, name, isContextReady, attributesKey]);
 
   return { loading, error };
 };

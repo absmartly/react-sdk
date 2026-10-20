@@ -10,6 +10,7 @@ The A/B Smartly React SDK is compatible with:
 - **Rendering**: Client-side and server-side rendering (SSR)
 
 **Browser Support:**
+
 - Modern browsers (Chrome, Firefox, Safari, Edge)
 - IE 11+ (requires Promise polyfill)
 
@@ -20,6 +21,7 @@ The A/B Smartly React SDK is compatible with:
 **IMPORTANT:** The API key is exposed in your client-side bundle and can be viewed by anyone inspecting network traffic or JavaScript source.
 
 **Best Practices:**
+
 - Only use **publishable/public keys** with **read-only permissions** in browser applications
 - **NEVER** use secret keys with write permissions in client-side code
 - For write operations or sensitive API calls, implement a **server-side proxy**:
@@ -62,7 +64,7 @@ ReactDOM.render(
   <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
     <App />
   </SDKProvider>,
-  document.getElementById("root")
+  document.getElementById("root"),
 );
 ```
 
@@ -99,23 +101,23 @@ function AppWrapper() {
 
 **SDK Options**
 
-| Config       | Type                                 | Required? | Default | Description                                                                                                                                                                 |
-| :----------- | :----------------------------------- | :-------: | :-----: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| endpoint     | `string`                             |  &#9989;  | `null`  | The URL to your API endpoint. Most commonly `"your-company.absmartly.io"`                                                                                                   |
-| apiKey       | `string`                             |  &#9989;  | `null`  | Your API key which can be found on the Web Console.                                                                                                                         |
-| environment  | `string`                             |  &#9989;  | `null`  | The environment of the platform where the SDK is installed. Environments are created on the Web Console and should match the available environments in your infrastructure. |
-| application  | `string`                             |  &#9989;  | `null`  | The name of the application where the SDK is installed. Applications are created on the Web Console and should match the applications where your experiments will be running.|
-| retries      | `number`                             | &#10060;  | `5`     | Number of retry attempts for failed HTTP requests.                                                                                                                          |
-| timeout      | `number`                             | &#10060;  | `3000`  | Connection timeout in milliseconds.                                                                                                                                         |
-| eventLogger  | `(context, eventName, data) => void` | &#10060;  | `null`  | Callback to handle SDK events (ready, exposure, goal, etc.)                                                                                                                 |
+| Config      | Type                                 | Required? | Default | Description                                                                                                                                                                   |
+| :---------- | :----------------------------------- | :-------: | :-----: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| endpoint    | `string`                             |  &#9989;  | `null`  | The URL to your API endpoint. Most commonly `"your-company.absmartly.io"`                                                                                                     |
+| apiKey      | `string`                             |  &#9989;  | `null`  | Your API key which can be found on the Web Console.                                                                                                                           |
+| environment | `string`                             |  &#9989;  | `null`  | The environment of the platform where the SDK is installed. Environments are created on the Web Console and should match the available environments in your infrastructure.   |
+| application | `string`                             |  &#9989;  | `null`  | The name of the application where the SDK is installed. Applications are created on the Web Console and should match the applications where your experiments will be running. |
+| retries     | `number`                             | &#10060;  |   `5`   | Number of retry attempts for failed HTTP requests.                                                                                                                            |
+| timeout     | `number`                             | &#10060;  | `3000`  | Connection timeout in milliseconds.                                                                                                                                           |
+| eventLogger | `(context, eventName, data) => void` | &#10060;  | `null`  | Callback to handle SDK events (ready, exposure, goal, etc.)                                                                                                                   |
 
 **Context Options**
 
-| Config          | Type     | Required? | Default | Description                                                     |
-| :-------------- | :------- | :-------: | :-----: | :-------------------------------------------------------------- |
-| units           | `object` |  &#9989;  | `{}`    | Map of unit types to unit identifiers (e.g., `{session_id: "..."}`) |
-| publishDelay    | `number` | &#10060;  | `100`   | Delay in milliseconds before publishing events.                |
-| refreshPeriod   | `number` | &#10060;  | `0`     | Interval in milliseconds to refresh experiment data.           |
+| Config        | Type     | Required? | Default | Description                                                         |
+| :------------ | :------- | :-------: | :-----: | :------------------------------------------------------------------ |
+| units         | `object` |  &#9989;  |  `{}`   | Map of unit types to unit identifiers (e.g., `{session_id: "..."}`) |
+| publishDelay  | `number` | &#10060;  |  `100`  | Delay in milliseconds before publishing events.                     |
+| refreshPeriod | `number` | &#10060;  |   `0`   | Interval in milliseconds to refresh experiment data.                |
 
 ## Creating a New Context
 
@@ -143,7 +145,7 @@ const sdk = new SDK({
 
 const context = sdk.createContextWith(
   { units: { session_id: sessionId } },
-  serverSideContextData
+  serverSideContextData,
 );
 
 function App() {
@@ -520,17 +522,16 @@ function LoginForm() {
   const { resetContext } = useABSmartly();
 
   const handleLogin = async (userId) => {
-    await resetContext(
-      { units: { user_id: userId } },
-      { publishDelay: 100 }
-    );
+    await resetContext({ units: { user_id: userId } }, { publishDelay: 100 });
   };
 
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      handleLogin("new-user-id");
-    }}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleLogin("new-user-id");
+      }}
+    >
       <button type="submit">Login</button>
     </form>
   );
@@ -590,15 +591,15 @@ function App() {
 
 **Event Types**
 
-| Event        | When                                                  | Data                                          |
-| :----------- | :---------------------------------------------------- | :-------------------------------------------- |
-| `"error"`    | Context receives an error                             | Error object thrown                           |
-| `"ready"`    | Context turns ready                                   | Data used to initialize the context           |
-| `"refresh"`  | `context.refresh()` method succeeds                   | Data used to refresh the context              |
-| `"publish"`  | `context.publish()` method succeeds                   | Data sent to the A/B Smartly event collector  |
-| `"exposure"` | `context.treatment()` succeeds on first exposure      | Exposure data enqueued for publishing         |
-| `"goal"`     | `context.track()` method succeeds                     | Goal data enqueued for publishing             |
-| `"finalize"` | `context.finalize()` method succeeds the first time   | undefined                                     |
+| Event        | When                                                | Data                                         |
+| :----------- | :-------------------------------------------------- | :------------------------------------------- |
+| `"error"`    | Context receives an error                           | Error object thrown                          |
+| `"ready"`    | Context turns ready                                 | Data used to initialize the context          |
+| `"refresh"`  | `context.refresh()` method succeeds                 | Data used to refresh the context             |
+| `"publish"`  | `context.publish()` method succeeds                 | Data sent to the A/B Smartly event collector |
+| `"exposure"` | `context.treatment()` succeeds on first exposure    | Exposure data enqueued for publishing        |
+| `"goal"`     | `context.track()` method succeeds                   | Goal data enqueued for publishing            |
+| `"finalize"` | `context.finalize()` method succeeds the first time | undefined                                    |
 
 ## React-Specific Patterns
 
@@ -608,14 +609,8 @@ The React SDK exports TypeScript types for all public APIs.
 
 ```tsx
 import React from "react";
-import SDKProvider, {
-  useABSmartly,
-  useTreatment,
-} from "@absmartly/react-sdk";
-import type {
-  SDKOptionsType,
-  ContextOptionsType,
-} from "@absmartly/react-sdk";
+import SDKProvider, { useABSmartly, useTreatment } from "@absmartly/react-sdk";
+import type { SDKOptionsType, ContextOptionsType } from "@absmartly/react-sdk";
 
 const sdkOptions: SDKOptionsType = {
   endpoint: "https://your-company.absmartly.io/v1",
@@ -724,10 +719,12 @@ The HOC injects an `absmartly` prop with the following shape:
 Gets the treatment variant for an experiment.
 
 **Parameters:**
+
 - `name` - Experiment name
 - `peek` - If true, does not trigger an exposure event (default: `false`)
 
 **Returns:**
+
 ```typescript
 {
   variant: number | null;
@@ -742,6 +739,7 @@ Gets the treatment variant for an experiment.
 Returns the SDK instance, context, and reset function. Throws if used outside of `SDKProvider`.
 
 **Returns:**
+
 ```typescript
 {
   sdk: ABSmartlySDK;
@@ -756,6 +754,7 @@ Returns the SDK instance, context, and reset function. Throws if used outside of
 Low-level hook for waiting on context readiness. Used internally by `Treatment` and `TreatmentFunction`.
 
 **Options:**
+
 ```typescript
 {
   context: Context;
@@ -766,6 +765,7 @@ Low-level hook for waiting on context readiness. Used internally by `Treatment` 
 ```
 
 **Returns:**
+
 ```typescript
 {
   loading: boolean;
@@ -780,6 +780,7 @@ Low-level hook for waiting on context readiness. Used internally by `Treatment` 
 Provider component that initializes the SDK and makes it available to child components.
 
 **Props (option 1 - automatic context creation):**
+
 ```typescript
 {
   sdkOptions: SDKOptionsType;
@@ -789,6 +790,7 @@ Provider component that initializes the SDK and makes it available to child comp
 ```
 
 **Props (option 2 - pre-initialized context):**
+
 ```typescript
 {
   context: ABSmartlyContext;
@@ -801,6 +803,7 @@ Provider component that initializes the SDK and makes it available to child comp
 Declarative component for rendering different treatment variants.
 
 **Props:**
+
 ```typescript
 {
   name: string;
@@ -816,6 +819,7 @@ Declarative component for rendering different treatment variants.
 Child component of `<Treatment>` that defines a specific variant.
 
 **Props:**
+
 ```typescript
 {
   variant: number | string;
@@ -828,6 +832,7 @@ Child component of `<Treatment>` that defines a specific variant.
 Render-prop component that provides variant and variables to a render function.
 
 **Props:**
+
 ```typescript
 {
   name: string;
@@ -849,6 +854,7 @@ Higher-order component that injects an `absmartly` prop into a class component.
 **A/B Smartly** is the leading provider of state-of-the-art, on-premises, full-stack experimentation platforms for engineering and product teams that want to confidently deploy features as fast as they can develop them. A/B Smartly's real-time analytics helps engineering and product teams ensure that new features will improve the customer experience without breaking or degrading performance and/or business metrics.
 
 ### Have a look at our growing list of clients and SDKs:
+
 - [JavaScript SDK](https://www.github.com/absmartly/javascript-sdk)
 - [React SDK](https://www.github.com/absmartly/react-sdk) (this package)
 - [Vue2 SDK](https://www.github.com/absmartly/vue2-sdk)

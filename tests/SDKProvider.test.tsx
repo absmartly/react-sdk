@@ -202,15 +202,24 @@ describe("SDKProvider", () => {
 
     const InnerComponent = () => {
       const { context } = useABSmartly();
-      return <span data-testid="inner-context">{context ? "has-context" : "no-context"}</span>;
+      return (
+        <span data-testid="inner-context">
+          {context ? "has-context" : "no-context"}
+        </span>
+      );
     };
 
     const OuterComponent = () => {
       const { context } = useABSmartly();
       return (
         <div>
-          <span data-testid="outer-context">{context ? "has-context" : "no-context"}</span>
-          <SDKProvider sdkOptions={sdkOptions} contextOptions={innerContextOptions}>
+          <span data-testid="outer-context">
+            {context ? "has-context" : "no-context"}
+          </span>
+          <SDKProvider
+            sdkOptions={sdkOptions}
+            contextOptions={innerContextOptions}
+          >
             <InnerComponent />
           </SDKProvider>
         </div>
@@ -223,8 +232,12 @@ describe("SDKProvider", () => {
       </SDKProvider>,
     );
 
-    expect(screen.getByTestId("outer-context")).toHaveTextContent("has-context");
-    expect(screen.getByTestId("inner-context")).toHaveTextContent("has-context");
+    expect(screen.getByTestId("outer-context")).toHaveTextContent(
+      "has-context",
+    );
+    expect(screen.getByTestId("inner-context")).toHaveTextContent(
+      "has-context",
+    );
     expect(mockCreateContext).toHaveBeenCalledTimes(2);
   });
 
@@ -266,7 +279,10 @@ describe("SDKProvider", () => {
     };
 
     render(
-      <SDKProvider sdkOptions={minimalSdkOptions} contextOptions={contextOptions}>
+      <SDKProvider
+        sdkOptions={minimalSdkOptions}
+        contextOptions={contextOptions}
+      >
         <TestComponent />
       </SDKProvider>,
     );

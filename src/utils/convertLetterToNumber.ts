@@ -10,13 +10,11 @@ export const convertLetterToNumber = (char: Char | number): number => {
 
   if (typeof char === "string" && char.length === 1) {
     const lowerChar = char.toLowerCase();
-    if (lowerChar >= 'a' && lowerChar <= 'z') {
+    if (lowerChar >= "a" && lowerChar <= "z") {
       return lowerChar.charCodeAt(0) - 97;
     }
   }
 
-  console.warn(
-    `convertLetterToNumber: Invalid input "${char}". Returning 0.`
-  );
+  console.warn(`convertLetterToNumber: Invalid input "${char}". Returning 0.`);
   return 0;
 };

@@ -21,12 +21,10 @@ const getVariantAndVariables = (
   context: Context,
   name: string,
 ): { variant: number; variables: Record<string, unknown> } => {
-  const variablesObject = Object.fromEntries(
-    Object.keys(context.variableKeys()).map((key) => [
-      key,
-      context.peekVariableValue(key, ""),
-    ])
-  );
+  const variablesObject: Record<string, unknown> = {};
+  Object.keys(context.variableKeys()).forEach((key) => {
+    variablesObject[key] = context.peekVariableValue(key, "");
+  });
 
   const treatment = context.treatment(name);
 
@@ -75,14 +73,22 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
   if (!ensuredContext) {
     console.warn(
-      `TreatmentFunction "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`
+      `TreatmentFunction "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`,
     );
     return null;
   }
 
   if (error) {
     return (
-      <div role="alert" style={{ padding: '10px', border: '1px solid red', borderRadius: '4px', backgroundColor: '#fee' }}>
+      <div
+        role="alert"
+        style={{
+          padding: "10px",
+          border: "1px solid red",
+          borderRadius: "4px",
+          backgroundColor: "#fee",
+        }}
+      >
         <strong>Failed to load experiment "{name}"</strong>
         {process.env.NODE_ENV === "development" && <p>{error.message}</p>}
       </div>

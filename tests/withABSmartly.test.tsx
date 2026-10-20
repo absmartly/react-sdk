@@ -94,11 +94,7 @@ describe("withABSmartly HOC", () => {
       items: string[];
     }
 
-    const TestComponent = ({
-      message,
-      count,
-      items,
-    }: TestComponentProps) => {
+    const TestComponent = ({ message, count, items }: TestComponentProps) => {
       return (
         <div>
           <span data-testid="message">{message}</span>
@@ -173,11 +169,11 @@ describe("withABSmartly HOC", () => {
       absmartly: ABSmartly;
     }
 
-    const WrappedComponent = withABSmartly(
-      (({ absmartly }: TestComponentProps) => (
-        <div>{absmartly ? "wrapped" : "not wrapped"}</div>
-      )) as ComponentType<TestComponentProps>,
-    );
+    const WrappedComponent = withABSmartly((({
+      absmartly,
+    }: TestComponentProps) => (
+      <div>{absmartly ? "wrapped" : "not wrapped"}</div>
+    )) as ComponentType<TestComponentProps>);
 
     expect(WrappedComponent.displayName).toBe("withABSmartly(Component)");
   });

@@ -1,9 +1,4 @@
-import {
-  act,
-  cleanup,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi, MockedClass } from "vitest";
 
@@ -76,7 +71,9 @@ describe("Fix #2: Stale closure in resetContext (uses ref)", () => {
     const TestComponent = () => {
       const { resetContext } = useABSmartly();
       return (
-        <button onClick={() => resetContext({ units: { user_id: "new-user" } })}>
+        <button
+          onClick={() => resetContext({ units: { user_id: "new-user" } })}
+        >
           Reset
         </button>
       );
@@ -118,7 +115,7 @@ describe("Fix #13: withABSmartly HOC null guard", () => {
     const WrappedComponent = withABSmartly(TestComponent);
 
     expect(() => render(<WrappedComponent />)).toThrow(
-      "withABSmartly must be used within an SDKProvider"
+      "withABSmartly must be used within an SDKProvider",
     );
   });
 

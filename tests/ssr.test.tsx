@@ -12,7 +12,12 @@ import {
 import { renderToString } from "react-dom/server";
 
 import { Context, SDK } from "@absmartly/javascript-sdk";
-import { useABSmartly, useTreatment, Treatment, TreatmentVariant } from "../src";
+import {
+  useABSmartly,
+  useTreatment,
+  Treatment,
+  TreatmentVariant,
+} from "../src";
 import { SDKProvider } from "../src/components/SDKProvider";
 
 vi.mock("../src/hooks/useABSmartly");
@@ -65,16 +70,10 @@ describe("SSR Support", () => {
 
       const TestComponent = () => {
         const { variant, loading } = useTreatment("test-experiment");
-        return (
-          <div>
-            {loading ? "Loading..." : `Variant: ${variant}`}
-          </div>
-        );
+        return <div>{loading ? "Loading..." : `Variant: ${variant}`}</div>;
       };
 
-      const wrapper: FC<PropsWithChildren> = ({ children }) => (
-        <>{children}</>
-      );
+      const wrapper: FC<PropsWithChildren> = ({ children }) => <>{children}</>;
 
       const { result } = renderHook(() => useTreatment("test-experiment"), {
         wrapper,

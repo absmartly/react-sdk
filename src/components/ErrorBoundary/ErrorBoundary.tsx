@@ -4,7 +4,7 @@ declare const process: { env: { NODE_ENV?: string } };
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode | ((error: Error, errorInfo: ErrorInfo | null) => ReactNode);
+  fallback?: ReactNode | ((error: Error, errorInfo: ErrorInfo) => ReactNode);
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
@@ -14,7 +14,10 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -40,14 +43,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       this.props.onError(error, errorInfo);
     }
 
-    console.error("ABSmartly Error Boundary caught an error:", error, errorInfo);
+    console.error(
+      "ABSmartly Error Boundary caught an error:",
+      error,
+      errorInfo,
+    );
   }
 
   render(): ReactNode {
     if (this.state.hasError && this.state.error) {
       if (this.props.fallback) {
         if (typeof this.props.fallback === "function") {
-          return this.props.fallback(this.state.error, this.state.errorInfo);
+          return this.props.fallback(
+            this.state.error,
+            this.state.errorInfo ?? ({ componentStack: "" } as ErrorInfo),
+          );
         }
         return this.props.fallback;
       }

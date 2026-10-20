@@ -1,4 +1,11 @@
-import React, { FC, ReactNode, useState, useMemo, useCallback, useRef } from "react";
+import React, {
+  FC,
+  ReactNode,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 
 import absmartly from "@absmartly/javascript-sdk";
 
@@ -50,10 +57,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
   contextRef.current = providedContext;
 
   const resetContext = useCallback(
-    async (
-      params: ContextRequestType,
-      contextOptions?: ContextOptionsType,
-    ) => {
+    async (params: ContextRequestType, contextOptions?: ContextOptionsType) => {
       try {
         const ctx = contextRef.current;
         await ctx.ready();
@@ -71,7 +75,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
         const newContext = sdk.createContextWith(
           params,
           contextData,
-          combinedContextOptions
+          combinedContextOptions,
         );
 
         setProvidedContext(newContext);
@@ -83,7 +87,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
         throw err;
       }
     },
-    [sdk]
+    [sdk],
   );
 
   const value = useMemo<ABSmartly>(
@@ -93,7 +97,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
       resetContext,
       contextError,
     }),
-    [sdk, providedContext, resetContext, contextError]
+    [sdk, providedContext, resetContext, contextError],
   );
 
   return <_SdkContext.Provider value={value}>{children}</_SdkContext.Provider>;

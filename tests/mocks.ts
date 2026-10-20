@@ -19,6 +19,5 @@ export const mockedUseABSmartly = useABSmartly as MockedFunction<
   typeof useABSmartly
 >;
 
-export const mockedUseOptionalABSmartly = useOptionalABSmartly as MockedFunction<
-  typeof useOptionalABSmartly
->;
+export const mockedUseOptionalABSmartly =
+  useOptionalABSmartly as MockedFunction<typeof useOptionalABSmartly>;
