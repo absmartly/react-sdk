@@ -21,7 +21,11 @@ export const useContextReady = ({
 }: UseContextReadyOptions): UseContextReadyResult => {
   const isContextReady = context?.isReady() ?? false;
   const [loading, setLoading] = useState<boolean>(!isContextReady);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<Error | null>(() =>
+    isContextReady && context?.isFailed?.()
+      ? new Error(`ABsmartly context failed to initialize for "${name}"`)
+      : null,
+  );
 
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
