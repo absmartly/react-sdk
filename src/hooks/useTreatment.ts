@@ -8,8 +8,9 @@ export const useTreatment = (name: string, peek = false) => {
 
   const [variant, setVariant] = useState<number | null>(() => {
     if (isContextReady) {
-      const treatment = peek ? context.peek(name) : context.treatment(name);
-      return treatment ?? 0;
+      // peek() avoids queueing an exposure during render; the effect below
+      // records it once the component has committed.
+      return context.peek(name) ?? 0;
     }
     return null;
   });

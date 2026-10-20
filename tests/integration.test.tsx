@@ -28,6 +28,7 @@ const createMockContext = (treatment: number, isReady = true) => ({
   isReady: vi.fn().mockReturnValue(isReady),
   isFailed: vi.fn().mockReturnValue(false),
   treatment: vi.fn().mockReturnValue(treatment),
+  peek: vi.fn().mockReturnValue(treatment),
   ready: vi.fn().mockResolvedValue(undefined),
   attributes: vi.fn(),
   variableKeys: vi.fn().mockReturnValue({}),

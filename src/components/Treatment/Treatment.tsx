@@ -35,9 +35,14 @@ export const Treatment: FC<TreatmentProps> = ({
   const absmartly = useOptionalABSmartly();
   const ensuredContext = context ?? absmartly?.context ?? null;
 
+  const childrenArray = useMemo(
+    () => React.Children.toArray(children),
+    [children],
+  );
+
   const childrenInfo = useMemo(
     () =>
-      React.Children.map(children, (child) => {
+      childrenArray.map((child) => {
         if (!React.isValidElement(child)) {
           console.warn(
             `Treatment "${name}": Non-element child detected. Using variant 0.`,
@@ -55,15 +60,15 @@ export const Treatment: FC<TreatmentProps> = ({
 
         return { variant };
       }),
-    [children, name],
+    [childrenArray, name],
   );
 
   const childrenInfoRef = useRef(childrenInfo);
   childrenInfoRef.current = childrenInfo;
 
   const getSelectedChildIndex = useCallback(
-    (ctx: Context): number => {
-      const treatment = ctx.treatment(name);
+    (ctx: Context, expose: boolean): number => {
+      const treatment = expose ? ctx.treatment(name) : ctx.peek(name);
       const targetVariant = treatment ?? 0;
       const info = childrenInfoRef.current;
 
@@ -90,15 +95,17 @@ export const Treatment: FC<TreatmentProps> = ({
     [name],
   );
 
-  const [selectedTreatment, setSelectedTreatment] = useState(() =>
-    ensuredContext?.isReady() ? getSelectedChildIndex(ensuredContext) : null,
-  );
-
-  const childrenArray = React.Children.toArray(children);
+  const [selectedTreatment, setSelectedTreatment] = useState(() => {
+    if (!ensuredContext?.isReady()) return null;
+    // Attributes must be set before the first assignment; peek avoids
+    // logging an exposure during render.
+    if (attributes) ensuredContext.attributes(attributes);
+    return getSelectedChildIndex(ensuredContext, false);
+  });
 
   const handleContextReady = useCallback(() => {
     if (ensuredContext) {
-      setSelectedTreatment(getSelectedChildIndex(ensuredContext));
+      setSelectedTreatment(getSelectedChildIndex(ensuredContext, true));
     }
   }, [ensuredContext, getSelectedChildIndex]);
 

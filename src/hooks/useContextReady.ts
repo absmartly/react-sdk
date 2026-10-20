@@ -44,9 +44,13 @@ export const useContextReady = ({
       if (onReadyRef.current) {
         onReadyRef.current(context);
       }
+      setError(null);
       setLoading(false);
       return;
     }
+
+    setLoading(true);
+    setError(null);
 
     context
       .ready()

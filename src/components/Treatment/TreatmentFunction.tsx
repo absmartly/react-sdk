@@ -20,13 +20,14 @@ interface TreatmentFunctionProps {
 const getVariantAndVariables = (
   context: Context,
   name: string,
+  expose: boolean,
 ): { variant: number; variables: Record<string, unknown> } => {
   const variablesObject: Record<string, unknown> = {};
   Object.keys(context.variableKeys()).forEach((key) => {
     variablesObject[key] = context.peekVariableValue(key, "");
   });
 
-  const treatment = context.treatment(name);
+  const treatment = expose ? context.treatment(name) : context.peek(name);
 
   return {
     variant: treatment ?? 0,
@@ -49,7 +50,10 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     variables: Record<string, unknown>;
   }>(() => {
     if (ensuredContext?.isReady()) {
-      return getVariantAndVariables(ensuredContext, name);
+      // Attributes must be set before the first assignment; peek avoids
+      // logging an exposure during render.
+      if (attributes) ensuredContext.attributes(attributes);
+      return getVariantAndVariables(ensuredContext, name, false);
     }
     return {
       variant: !loadingComponent ? 0 : undefined,
@@ -59,7 +63,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
 
   const handleContextReady = useCallback(() => {
     if (ensuredContext) {
-      const result = getVariantAndVariables(ensuredContext, name);
+      const result = getVariantAndVariables(ensuredContext, name, true);
       setVariantAndVariables(result);
     }
   }, [ensuredContext, name]);

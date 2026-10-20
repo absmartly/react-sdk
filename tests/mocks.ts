@@ -5,6 +5,7 @@ import { useABSmartly, useOptionalABSmartly } from "../src/hooks/useABSmartly";
 export const mocks = {
   context: {
     treatment: vi.fn(),
+    peek: vi.fn((name: string) => mocks.context.treatment(name)),
     experimentConfig: vi.fn(),
     attributes: vi.fn(),
     ready: vi.fn(),
