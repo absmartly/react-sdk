@@ -23,6 +23,7 @@ describe("TreatmentFunction Component", () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.isFailed.mockReturnValue(false);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
     mocks.context.ready.mockResolvedValue(true);
 
     render(
@@ -83,6 +84,7 @@ describe("TreatmentFunction Component", () => {
     const config = { a: 1, b: 2 };
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     await ready;
 
@@ -130,6 +132,7 @@ describe("TreatmentFunction Component", () => {
     const config = { a: 1, b: 2 };
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     await ready;
 
@@ -147,6 +150,7 @@ describe("TreatmentFunction Component", () => {
       mocks.context.isReady.mockReturnValue(true);
       mocks.context.isFailed.mockReturnValue(false);
       mocks.context.treatment.mockReturnValue(variant);
+      mocks.context.peek.mockReturnValue(variant);
 
       render(
         <TreatmentFunction
@@ -168,6 +172,7 @@ describe("TreatmentFunction Component", () => {
 
   it("should accept a string as a child", async () => {
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     render(
       <TreatmentFunction context={mocks.context} name="test_exp">
@@ -186,6 +191,7 @@ describe("TreatmentFunction Component", () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.isFailed.mockReturnValue(false);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     const TestComponent = vi.fn();
 

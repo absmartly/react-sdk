@@ -25,6 +25,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.isFailed.mockReturnValue(false);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
     mocks.context.ready.mockResolvedValue(true);
 
     render(
@@ -119,6 +120,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     const config = { a: 1, b: 2 };
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     await ready;
 
@@ -143,6 +145,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       mocks.context.isReady.mockReturnValue(true);
       mocks.context.isFailed.mockReturnValue(false);
       mocks.context.treatment.mockReturnValue(variant);
+      mocks.context.peek.mockReturnValue(variant);
 
       render(
         <Treatment
@@ -181,6 +184,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       mocks.context.isReady.mockReturnValue(true);
       mocks.context.isFailed.mockReturnValue(false);
       mocks.context.treatment.mockReturnValue(variant);
+      mocks.context.peek.mockReturnValue(variant);
 
       render(
         <Treatment
@@ -206,6 +210,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.isFailed.mockReturnValue(false);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     render(
       <Treatment context={mocks.context} name="test_exp">
@@ -225,6 +230,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
 
   it("should accept strings as TreatmentVariant children", async () => {
     mocks.context.treatment.mockReturnValue(0);
+    mocks.context.peek.mockReturnValue(0);
 
     render(
       <Treatment name="test_exp" context={mocks.context}>
@@ -238,6 +244,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     mocks.context.isFailed.mockReturnValue(false);
     mocks.context.ready.mockResolvedValue(true);
     mocks.context.treatment.mockReturnValue(0);
+    mocks.context.peek.mockReturnValue(0);
 
     mockedUseOptionalABSmartly.mockReturnValue({
       context: mocks.context,

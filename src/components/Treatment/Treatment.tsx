@@ -2,6 +2,7 @@ import React, {
   FC,
   ReactNode,
   useState,
+  useEffect,
   useCallback,
   useMemo,
   useRef,
@@ -102,6 +103,12 @@ export const Treatment: FC<TreatmentProps> = ({
     if (attributes) ensuredContext.attributes(attributes);
     return getSelectedChildIndex(ensuredContext, false);
   });
+
+  useEffect(() => {
+    if (ensuredContext?.isReady()) {
+      setSelectedTreatment(getSelectedChildIndex(ensuredContext, false));
+    }
+  }, [childrenInfo, ensuredContext, getSelectedChildIndex]);
 
   const handleContextReady = useCallback(() => {
     if (ensuredContext) {

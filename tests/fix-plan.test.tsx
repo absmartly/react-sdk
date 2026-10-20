@@ -14,6 +14,7 @@ vi.mock("../src/hooks/useABSmartly");
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  mocks.context.isFailed.mockReturnValue(false);
 });
 
 describe("Fix #1: Rules of Hooks - Treatment renders without context", () => {
@@ -84,6 +85,7 @@ describe("Fix #3: useContextReady calls onReady when initially ready", () => {
   it("should call treatment when context is ready on mount", async () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     render(
       <Treatment context={mocks.context} name="test_exp">
@@ -104,6 +106,7 @@ describe("Fix #3: useContextReady calls onReady when initially ready", () => {
   it("should set correct variant when context is ready on mount", async () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
+    mocks.context.peek.mockReturnValue(1);
 
     const { getByText } = render(
       <Treatment context={mocks.context} name="test_exp">
@@ -282,6 +285,7 @@ describe("Fix #10: childrenInfo memoized in Treatment", () => {
   it("should render correct variant with memoized childrenInfo", async () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(2);
+    mocks.context.peek.mockReturnValue(2);
 
     const { getByText } = render(
       <Treatment context={mocks.context} name="test_exp">
@@ -309,6 +313,7 @@ describe("Fix #11: useContextReady uses refs for onReady and attributes", () => 
 
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(0);
+    mocks.context.peek.mockReturnValue(0);
 
     const TestComponent = () => {
       renderCount();

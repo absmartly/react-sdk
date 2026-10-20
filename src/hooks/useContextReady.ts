@@ -40,7 +40,15 @@ export const useContextReady = ({
       context.attributes(attributesRef.current);
     }
 
+    const failure = () =>
+      new Error(`ABsmartly context failed to initialize for "${name}"`);
+
     if (isContextReady) {
+      if (context.isFailed?.()) {
+        setError(failure());
+        setLoading(false);
+        return;
+      }
       if (onReadyRef.current) {
         onReadyRef.current(context);
       }
@@ -56,6 +64,11 @@ export const useContextReady = ({
       .ready()
       .then(() => {
         if (!cancelled) {
+          if (context.isFailed?.()) {
+            setError(failure());
+            setLoading(false);
+            return;
+          }
           if (attributesRef.current) {
             context.attributes(attributesRef.current);
           }
