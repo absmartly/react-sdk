@@ -47,7 +47,7 @@ export const useContextReady = ({
     const failure = () =>
       new Error(`ABsmartly context failed to initialize for "${name}"`);
 
-    if (isContextReady) {
+    if (context.isReady()) {
       if (context.isFailed?.()) {
         setError(failure());
         setLoading(false);
@@ -95,7 +95,7 @@ export const useContextReady = ({
     return () => {
       cancelled = true;
     };
-  }, [context, name, isContextReady, attributesKey]);
+  }, [context, name, attributesKey]);
 
   return { loading, error };
 };

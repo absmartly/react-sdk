@@ -82,13 +82,13 @@ export const SDKProvider: FC<SDKProviderProps> = ({
           ...contextOptions,
         };
 
-        await ctx.finalize();
-
         const newContext = sdk.createContextWith(
           params,
           contextData,
           combinedContextOptions,
         );
+
+        await ctx.finalize();
 
         setProvidedContext(newContext);
         setContextError(null);
