@@ -105,7 +105,11 @@ export const Treatment: FC<TreatmentProps> = ({
   });
 
   useEffect(() => {
-    if (ensuredContext?.isReady()) {
+    if (
+      ensuredContext?.isReady() &&
+      !ensuredContext.isFinalizing?.() &&
+      !ensuredContext.isFinalized?.()
+    ) {
       setSelectedTreatment(getSelectedChildIndex(ensuredContext, false));
     }
   }, [childrenInfo, ensuredContext, getSelectedChildIndex]);

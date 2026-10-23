@@ -146,9 +146,8 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
 
     await waitFor(() => {
       const alert = container.querySelector('[role="alert"]');
-      if (alert) {
-        expect(alert.textContent).not.toContain("Secret API error");
-      }
+      expect(alert).not.toBeNull();
+      expect(alert!.textContent).not.toContain("Secret API error");
     });
 
     process.env.NODE_ENV = originalEnv;
@@ -199,9 +198,8 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
 
     await waitFor(() => {
       const alert = container.querySelector('[role="alert"]');
-      if (alert) {
-        expect(alert.textContent).not.toContain("Secret error");
-      }
+      expect(alert).not.toBeNull();
+      expect(alert!.textContent).not.toContain("Secret error");
     });
 
     process.env.NODE_ENV = originalEnv;
@@ -333,5 +331,45 @@ describe("Fix #11: useContextReady uses refs for onReady and attributes", () => 
     await waitFor(() => {
       expect(renderCount.mock.calls.length).toBeLessThan(10);
     });
+  });
+});
+
+describe("Treatment rerender while context is finalizing", () => {
+  it("does not evaluate a finalizing context when children change", async () => {
+    let finalizing = false;
+    const ctx = {
+      isReady: vi.fn().mockReturnValue(true),
+      isFailed: vi.fn().mockReturnValue(false),
+      isFinalizing: vi.fn(() => finalizing),
+      isFinalized: vi.fn().mockReturnValue(false),
+      ready: vi.fn().mockResolvedValue(undefined),
+      attributes: vi.fn(),
+      treatment: vi.fn().mockReturnValue(0),
+      peek: vi.fn(() => {
+        if (finalizing) throw new Error("ABsmartly Context is finalizing.");
+        return 0;
+      }),
+    } as unknown as Context;
+
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const renderTree = (label: string) => (
+      <ErrorBoundary fallback={<p>Boundary fallback</p>}>
+        <Treatment context={ctx} name="test_exp">
+          <TreatmentVariant variant="0">
+            <p>{label}</p>
+          </TreatmentVariant>
+        </Treatment>
+      </ErrorBoundary>
+    );
+
+    const { rerender } = render(renderTree("Control A"));
+    await waitFor(() => expect(screen.getByText("Control A")).toBeTruthy());
+
+    finalizing = true;
+    rerender(renderTree("Control B"));
+
+    await waitFor(() => expect(screen.getByText("Control B")).toBeTruthy());
+    expect(screen.queryByText("Boundary fallback")).toBeNull();
   });
 });
