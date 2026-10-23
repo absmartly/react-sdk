@@ -52,8 +52,13 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     if (ensuredContext?.isReady()) {
       // Attributes must be set before the first assignment; peek avoids
       // logging an exposure during render.
-      if (attributes) ensuredContext.attributes(attributes);
-      return getVariantAndVariables(ensuredContext, name, false);
+      // A finalizing context throws; useContextReady reports that error.
+      try {
+        if (attributes) ensuredContext.attributes(attributes);
+        return getVariantAndVariables(ensuredContext, name, false);
+      } catch {
+        return { variant: 0, variables: {} };
+      }
     }
     return {
       variant: !loadingComponent ? 0 : undefined,

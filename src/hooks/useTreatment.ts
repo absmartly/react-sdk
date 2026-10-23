@@ -9,8 +9,13 @@ export const useTreatment = (name: string, peek = false) => {
   const [variant, setVariant] = useState<number | null>(() => {
     if (isContextReady) {
       // peek() avoids queueing an exposure during render; the effect below
-      // records it once the component has committed.
-      return context.peek(name) ?? 0;
+      // records it once the component has committed. A finalizing context
+      // throws here; the effect reports that error.
+      try {
+        return context.peek(name) ?? 0;
+      } catch {
+        return null;
+      }
     }
     return null;
   });

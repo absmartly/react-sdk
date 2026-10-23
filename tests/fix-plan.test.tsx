@@ -373,3 +373,109 @@ describe("Treatment rerender while context is finalizing", () => {
     expect(screen.queryByText("Boundary fallback")).toBeNull();
   });
 });
+
+describe("Declarative treatments during reset", () => {
+  const makeFinalizingContext = () => {
+    let finalizing = false;
+    const fail = () => {
+      if (finalizing) throw new Error("ABsmartly Context is finalizing.");
+      return 0;
+    };
+    const ctx = {
+      isReady: vi.fn().mockReturnValue(true),
+      isFailed: vi.fn().mockReturnValue(false),
+      isFinalizing: vi.fn(() => finalizing),
+      isFinalized: vi.fn().mockReturnValue(false),
+      ready: vi.fn().mockResolvedValue(undefined),
+      attributes: vi.fn(),
+      treatment: vi.fn(fail),
+      peek: vi.fn(fail),
+      variableKeys: vi.fn(() => {
+        fail();
+        return {};
+      }),
+      peekVariableValue: vi.fn(),
+    } as unknown as Context;
+    return { ctx, startFinalizing: () => (finalizing = true) };
+  };
+
+  it("Treatment name change while finalizing reports an error instead of throwing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { ctx, startFinalizing } = makeFinalizingContext();
+    const tree = (name: string) => (
+      <ErrorBoundary fallback={<p>Boundary fallback</p>}>
+        <Treatment context={ctx} name={name}>
+          <TreatmentVariant variant="0">
+            <p>Control</p>
+          </TreatmentVariant>
+        </Treatment>
+      </ErrorBoundary>
+    );
+
+    const { rerender } = render(tree("exp_a"));
+    await waitFor(() => expect(screen.getByText("Control")).toBeTruthy());
+
+    startFinalizing();
+    rerender(tree("exp_b"));
+
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    expect(screen.queryByText("Boundary fallback")).toBeNull();
+  });
+
+  it("TreatmentFunction name change while finalizing reports an error instead of throwing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { ctx, startFinalizing } = makeFinalizingContext();
+    const tree = (name: string) => (
+      <ErrorBoundary fallback={<p>Boundary fallback</p>}>
+        <TreatmentFunction context={ctx} name={name}>
+          {({ variant }: TreatmentProps) => <p>Variant {variant}</p>}
+        </TreatmentFunction>
+      </ErrorBoundary>
+    );
+
+    const { rerender } = render(tree("exp_a"));
+    await waitFor(() => expect(screen.getByText("Variant 0")).toBeTruthy());
+
+    startFinalizing();
+    rerender(tree("exp_b"));
+
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    expect(screen.queryByText("Boundary fallback")).toBeNull();
+  });
+
+  it("Treatment mounted while finalizing reports an error instead of throwing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { ctx, startFinalizing } = makeFinalizingContext();
+    startFinalizing();
+
+    render(
+      <ErrorBoundary fallback={<p>Boundary fallback</p>}>
+        <Treatment context={ctx} name="exp_a">
+          <TreatmentVariant variant="0">
+            <p>Control</p>
+          </TreatmentVariant>
+        </Treatment>
+      </ErrorBoundary>,
+    );
+
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    expect(screen.queryByText("Boundary fallback")).toBeNull();
+  });
+
+  it("TreatmentFunction mounted while finalizing reports an error instead of throwing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { ctx, startFinalizing } = makeFinalizingContext();
+    startFinalizing();
+
+    render(
+      <ErrorBoundary fallback={<p>Boundary fallback</p>}>
+        <TreatmentFunction context={ctx} name="exp_a">
+          {({ variant }: TreatmentProps) => <p>Variant {variant}</p>}
+        </TreatmentFunction>
+      </ErrorBoundary>,
+    );
+
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    expect(screen.queryByText("Boundary fallback")).toBeNull();
+  });
+});

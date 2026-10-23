@@ -40,24 +40,32 @@ export const useContextReady = ({
 
     let cancelled = false;
 
-    if (attributesRef.current) {
-      context.attributes(attributesRef.current);
-    }
-
     const failure = () =>
       new Error(`ABsmartly context failed to initialize for "${name}"`);
 
-    if (context.isReady()) {
-      if (context.isFailed?.()) {
-        setError(failure());
+    try {
+      if (attributesRef.current) {
+        context.attributes(attributesRef.current);
+      }
+
+      if (context.isReady()) {
+        if (context.isFailed?.()) {
+          setError(failure());
+          setLoading(false);
+          return;
+        }
+        if (onReadyRef.current) {
+          onReadyRef.current(context);
+        }
+        setError(null);
         setLoading(false);
         return;
       }
-      if (onReadyRef.current) {
-        onReadyRef.current(context);
-      }
-      setError(null);
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      setError(err);
       setLoading(false);
+      console.error(`Failed to load treatment "${name}":`, err);
       return;
     }
 

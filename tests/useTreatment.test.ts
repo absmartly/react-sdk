@@ -225,3 +225,24 @@ describe("useTreatment input change while context is finalizing", () => {
     expect(result.current.loading).toBe(false);
   });
 });
+
+describe("useTreatment mounted while context is finalizing", () => {
+  it("returns the evaluation error instead of throwing during render", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockContext.isReady.mockReturnValue(true);
+    const finalizing = () => {
+      throw new Error("ABsmartly Context is finalizing.");
+    };
+    mockContext.peek.mockImplementation(finalizing);
+    mockContext.treatment.mockImplementation(finalizing);
+
+    const { result } = renderHook(() => useTreatment("exp_a"));
+
+    await waitFor(() =>
+      expect(result.current.error?.message).toBe(
+        "ABsmartly Context is finalizing.",
+      ),
+    );
+    expect(result.current.loading).toBe(false);
+  });
+});

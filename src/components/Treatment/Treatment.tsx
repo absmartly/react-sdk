@@ -100,8 +100,13 @@ export const Treatment: FC<TreatmentProps> = ({
     if (!ensuredContext?.isReady()) return null;
     // Attributes must be set before the first assignment; peek avoids
     // logging an exposure during render.
-    if (attributes) ensuredContext.attributes(attributes);
-    return getSelectedChildIndex(ensuredContext, false);
+    // A finalizing context throws; useContextReady reports that error.
+    try {
+      if (attributes) ensuredContext.attributes(attributes);
+      return getSelectedChildIndex(ensuredContext, false);
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
