@@ -4,10 +4,12 @@ import {
   TreatmentFunction,
   TreatmentVariant,
 } from "./components/Treatment";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useTreatment } from "./hooks/useTreatment";
+import { useContextReady } from "./hooks/useContextReady";
 
 import { withABSmartly } from "./hooks/HOCs/withABSmartly";
-import { useABSmartly } from "./hooks/useABSmartly";
+import { useABSmartly, useOptionalABSmartly } from "./hooks/useABSmartly";
 
 import { mergeConfig } from "@absmartly/javascript-sdk";
 import {
@@ -24,7 +26,10 @@ export {
   Treatment,
   TreatmentFunction,
   TreatmentVariant,
+  ErrorBoundary,
   useABSmartly,
+  useOptionalABSmartly,
+  useContextReady,
   withABSmartly,
   useTreatment,
 };

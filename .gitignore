@@ -7,3 +7,9 @@
 .idea
 
 coverage
+.claude/
+.DS_Store
+AUDIT_REPORT.md
+COMPLETION_SUMMARY.md
+FIXES_IMPLEMENTED.md
+package-lock.json

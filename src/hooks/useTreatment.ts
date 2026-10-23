@@ -4,26 +4,68 @@ import { useABSmartly } from "./useABSmartly";
 export const useTreatment = (name: string, peek = false) => {
   const { context } = useABSmartly();
 
-  const [variant, setVariant] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const isContextReady = context.isReady();
+
+  const [variant, setVariant] = useState<number | null>(() => {
+    if (isContextReady) {
+      // peek() avoids queueing an exposure during render; the effect below
+      // records it once the component has committed. A finalizing context
+      // throws here; the effect reports that error.
+      try {
+        return context.peek(name) ?? 0;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!isContextReady);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (isContextReady) {
+      try {
+        const treatment = peek ? context.peek(name) : context.treatment(name);
+        setVariant(treatment ?? 0);
+        setError(null);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        setError(err);
+        console.error(`Failed to get treatment "${name}":`, err);
+      }
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
     const fetchTreatment = async () => {
       try {
         await context.ready();
-        const treatment = peek ? context.peek(name) : context.treatment(name);
-        setVariant(treatment);
+        if (!cancelled) {
+          const treatment = peek ? context.peek(name) : context.treatment(name);
+          setVariant(treatment ?? 0);
+          setError(null);
+        }
       } catch (error) {
-        setError(error instanceof Error ? error : new Error(error.toString()));
-        console.error("Failed to get variant: ", error);
+        if (!cancelled) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          setError(err);
+          console.error(`Failed to get treatment "${name}":`, err);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchTreatment();
-  }, [context, name, peek]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [context, name, peek, isContextReady]);
 
   return { variant, loading, error, context };
 };

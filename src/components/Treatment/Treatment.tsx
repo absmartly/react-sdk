@@ -1,7 +1,18 @@
-import React, { FC, ReactNode, useEffect, useState } from "react";
+import React, {
+  FC,
+  ReactNode,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+
+declare const process: { env: { NODE_ENV?: string } };
 
 import { Context } from "@absmartly/javascript-sdk";
-import { useABSmartly } from "../../hooks/useABSmartly";
+import { useOptionalABSmartly } from "../../hooks/useABSmartly";
+import { useContextReady } from "../../hooks/useContextReady";
 import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
 
@@ -10,70 +21,144 @@ interface TreatmentProps {
   context?: Context;
   attributes?: Record<string, unknown>;
   loadingComponent?: ReactNode;
+  errorComponent?: ReactNode;
   children?: ReactNode;
 }
 
 export const Treatment: FC<TreatmentProps> = ({
   children,
   loadingComponent,
+  errorComponent,
   attributes,
   name,
   context,
 }) => {
-  const ensuredContext = context ?? useABSmartly().context;
+  const absmartly = useOptionalABSmartly();
+  const ensuredContext = context ?? absmartly?.context ?? null;
 
-  const [loading, setLoading] = useState<boolean>(
-    ensuredContext && !ensuredContext.isReady(),
+  const childrenArray = useMemo(
+    () => React.Children.toArray(children),
+    [children],
   );
 
-  // Turning the children into an array of objects and mapping them as variants
-  const childrenInfo = React.Children.map(children, (child) => {
-    const obj = child?.valueOf() as {
-      props: { variant: number | Char };
-    };
-    return { variant: obj.props.variant };
+  const childrenInfo = useMemo(
+    () =>
+      childrenArray.map((child) => {
+        if (!React.isValidElement(child)) {
+          console.warn(
+            `Treatment "${name}": Non-element child detected. Using variant 0.`,
+          );
+          return { variant: 0 };
+        }
+
+        const variant = (child.props as any).variant;
+        if (variant === undefined) {
+          console.warn(
+            `Treatment "${name}": Child missing "variant" prop. Using variant 0.`,
+          );
+          return { variant: 0 };
+        }
+
+        return { variant };
+      }),
+    [childrenArray, name],
+  );
+
+  const childrenInfoRef = useRef(childrenInfo);
+  childrenInfoRef.current = childrenInfo;
+
+  const getSelectedChildIndex = useCallback(
+    (ctx: Context, expose: boolean): number => {
+      const treatment = expose ? ctx.treatment(name) : ctx.peek(name);
+      const targetVariant = treatment ?? 0;
+      const info = childrenInfoRef.current;
+
+      if (!info || info.length === 0) {
+        console.warn(
+          `Treatment "${name}": No children available. Defaulting to variant 0.`,
+        );
+        return 0;
+      }
+
+      const index = info.findIndex(
+        (x) => convertLetterToNumber(x.variant) === targetVariant,
+      );
+
+      if (index === -1) {
+        console.warn(
+          `Treatment "${name}": No child found matching variant ${targetVariant}. Falling back to first child (variant 0).`,
+        );
+        return 0;
+      }
+
+      return index;
+    },
+    [name],
+  );
+
+  const [selectedTreatment, setSelectedTreatment] = useState(() => {
+    if (!ensuredContext?.isReady()) return null;
+    // Attributes must be set before the first assignment; peek avoids
+    // logging an exposure during render.
+    // A finalizing context throws; useContextReady reports that error.
+    try {
+      if (attributes) ensuredContext.attributes(attributes);
+      return getSelectedChildIndex(ensuredContext, false);
+    } catch {
+      return null;
+    }
   });
 
-  // Get the index of the first child with a variant matching the context treatment
-  const getSelectedChildIndex = (context: Context) => {
-    const treatment = context.treatment(name);
-
-    const index = childrenInfo?.findIndex(
-      (x) => convertLetterToNumber(x.variant) === (treatment || 0),
-    );
-
-    if (index === -1) {
-      return 0;
-    }
-
-    return index ?? 0;
-  };
-
-  // The index of the selected variant in the children array
-  const [selectedTreatment, setSelectedTreatment] = useState(
-    context?.isReady() ? getSelectedChildIndex(context) : null,
-  );
-
-  // Making the children prop into an array for selecting a single element later.
-  const childrenArray = React.Children.toArray(children);
-
-  // Set variant number and variables in state
   useEffect(() => {
-    if (attributes) ensuredContext.attributes(attributes);
+    if (
+      ensuredContext?.isReady() &&
+      !ensuredContext.isFinalizing?.() &&
+      !ensuredContext.isFinalized?.()
+    ) {
+      setSelectedTreatment(getSelectedChildIndex(ensuredContext, false));
+    }
+  }, [childrenInfo, ensuredContext, getSelectedChildIndex]);
 
-    ensuredContext
-      .ready()
-      .then(() => {
-        // Setting the state
-        setSelectedTreatment(getSelectedChildIndex(ensuredContext));
-      })
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((e: Error) => console.error(e));
-  }, [context, attributes]);
+  const handleContextReady = useCallback(() => {
+    if (ensuredContext) {
+      setSelectedTreatment(getSelectedChildIndex(ensuredContext, true));
+    }
+  }, [ensuredContext, getSelectedChildIndex]);
 
-  // Return the selected Treatment
+  const { loading, error } = useContextReady({
+    context: ensuredContext,
+    name,
+    attributes,
+    onReady: handleContextReady,
+  });
+
+  if (!ensuredContext) {
+    console.warn(
+      `Treatment "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`,
+    );
+    return null;
+  }
+
+  if (error) {
+    if (errorComponent) {
+      return <>{errorComponent}</>;
+    }
+    return (
+      <div
+        role="alert"
+        style={{
+          padding: "10px",
+          border: "1px solid red",
+          borderRadius: "4px",
+          backgroundColor: "#fee",
+        }}
+      >
+        <strong>Failed to load experiment "{name}"</strong>
+        {process.env.NODE_ENV === "development" && <p>{error.message}</p>}
+      </div>
+    );
+  }
+
   if (loading) {
     if (loadingComponent) return <>{loadingComponent}</>;
     return <>{childrenArray[0]}</>;

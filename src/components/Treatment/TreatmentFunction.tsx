@@ -1,6 +1,10 @@
 import { Context } from "@absmartly/javascript-sdk";
-import React, { FC, ReactNode, useEffect, useState } from "react";
-import { useABSmartly } from "../../hooks/useABSmartly";
+import React, { FC, ReactNode, useState, useCallback } from "react";
+
+declare const process: { env: { NODE_ENV?: string } };
+
+import { useOptionalABSmartly } from "../../hooks/useABSmartly";
+import { useContextReady } from "../../hooks/useContextReady";
 
 interface TreatmentFunctionProps {
   name: string;
@@ -13,6 +17,24 @@ interface TreatmentFunctionProps {
   }): ReactNode;
 }
 
+const getVariantAndVariables = (
+  context: Context,
+  name: string,
+  expose: boolean,
+): { variant: number; variables: Record<string, unknown> } => {
+  const variablesObject: Record<string, unknown> = {};
+  Object.keys(context.variableKeys()).forEach((key) => {
+    variablesObject[key] = context.peekVariableValue(key, "");
+  });
+
+  const treatment = expose ? context.treatment(name) : context.peek(name);
+
+  return {
+    variant: treatment ?? 0,
+    variables: variablesObject,
+  };
+};
+
 export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   children,
   loadingComponent,
@@ -20,49 +42,67 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   name,
   context,
 }) => {
-  const ensuredContext = context ?? useABSmartly().context;
+  const absmartly = useOptionalABSmartly();
+  const ensuredContext = context ?? absmartly?.context ?? null;
 
-  // State for storing the chosen variant, variables and whether this data
-  // is loading from the server
   const [variantAndVariables, setVariantAndVariables] = useState<{
     variant: number | undefined;
     variables: Record<string, unknown>;
-  }>({
-    variant: !loadingComponent ? 0 : undefined,
-    variables: {},
+  }>(() => {
+    if (ensuredContext?.isReady()) {
+      // Attributes must be set before the first assignment; peek avoids
+      // logging an exposure during render.
+      // A finalizing context throws; useContextReady reports that error.
+      try {
+        if (attributes) ensuredContext.attributes(attributes);
+        return getVariantAndVariables(ensuredContext, name, false);
+      } catch {
+        return { variant: 0, variables: {} };
+      }
+    }
+    return {
+      variant: !loadingComponent ? 0 : undefined,
+      variables: {},
+    };
   });
 
-  const [loading, setLoading] = useState<boolean>(!ensuredContext.isReady());
+  const handleContextReady = useCallback(() => {
+    if (ensuredContext) {
+      const result = getVariantAndVariables(ensuredContext, name, true);
+      setVariantAndVariables(result);
+    }
+  }, [ensuredContext, name]);
 
-  // Set variant number and variables in state
-  useEffect(() => {
-    if (attributes) ensuredContext.attributes(attributes);
+  const { loading, error } = useContextReady({
+    context: ensuredContext,
+    name,
+    attributes,
+    onReady: handleContextReady,
+  });
 
-    ensuredContext
-      .ready()
-      .then(() => {
-        // Turning the variable keys and values into an array of arrays
-        const variablesArray = Object.keys(ensuredContext.variableKeys()).map(
-          (key) => [key, ensuredContext.peekVariableValue(key, "")],
-        );
+  if (!ensuredContext) {
+    console.warn(
+      `TreatmentFunction "${name}": No context available. Either provide a context prop or wrap component in SDKProvider.`,
+    );
+    return null;
+  }
 
-        // Converting the array of arrays into a regular object
-        const variablesObject = variablesArray.reduce(
-          (obj, i) => Object.assign(obj, { [i[0]]: i[1] }),
-          {},
-        );
-
-        const treatment = ensuredContext.treatment(name);
-
-        // Setting the state
-        setVariantAndVariables({
-          variant: treatment,
-          variables: variablesObject,
-        });
-        setLoading(false);
-      })
-      .catch((e: Error) => console.error(e));
-  }, [context, attributes]);
+  if (error) {
+    return (
+      <div
+        role="alert"
+        style={{
+          padding: "10px",
+          border: "1px solid red",
+          borderRadius: "4px",
+          backgroundColor: "#fee",
+        }}
+      >
+        <strong>Failed to load experiment "{name}"</strong>
+        {process.env.NODE_ENV === "development" && <p>{error.message}</p>}
+      </div>
+    );
+  }
 
   if (loading) {
     return loadingComponent != null ? (

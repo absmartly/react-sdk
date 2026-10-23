@@ -14,3 +14,7 @@ export const useABSmartly = () => {
 
   return sdk;
 };
+
+export const useOptionalABSmartly = () => {
+  return useContext(_SdkContext);
+};
