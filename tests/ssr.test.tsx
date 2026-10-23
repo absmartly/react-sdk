@@ -1,5 +1,5 @@
 import { cleanup, renderHook } from "@testing-library/react";
-import React, { FC, PropsWithChildren } from "react";
+import React from "react";
 import {
   afterEach,
   beforeEach,
@@ -42,6 +42,7 @@ describe("SSR Support", () => {
   describe("useTreatment SSR behavior", () => {
     it("should return variant immediately when context is pre-ready (SSR scenario)", () => {
       const mockContext = createMockContext(true);
+      mockContext.peek.mockReturnValue(2);
       mockContext.treatment.mockReturnValue(2);
 
       mockedUseABSmartly.mockReturnValue({
@@ -50,16 +51,27 @@ describe("SSR Support", () => {
         resetContext: () => {},
       });
 
-      const { result } = renderHook(() => useTreatment("experiment-name"));
+      const TestComponent = () => {
+        const { variant, loading, error } = useTreatment("experiment-name");
+        return (
+          <div>
+            {loading ? "Loading" : `Variant: ${variant}`}
+            {error ? " error" : ""}
+          </div>
+        );
+      };
 
-      expect(result.current.loading).toBe(false);
-      expect(result.current.variant).toBe(2);
-      expect(result.current.error).toBe(null);
+      const html = renderToString(<TestComponent />);
+
+      expect(html).toContain("Variant: 2");
+      expect(html).not.toContain("Loading");
+      expect(html).not.toContain("error");
       expect(mockContext.ready).not.toHaveBeenCalled();
     });
 
     it("should support static rendering without async operations when context is ready", () => {
       const mockContext = createMockContext(true);
+      mockContext.peek.mockReturnValue(1);
       mockContext.treatment.mockReturnValue(1);
 
       mockedUseABSmartly.mockReturnValue({
@@ -73,14 +85,10 @@ describe("SSR Support", () => {
         return <div>{loading ? "Loading..." : `Variant: ${variant}`}</div>;
       };
 
-      const wrapper: FC<PropsWithChildren> = ({ children }) => <>{children}</>;
+      const html = renderToString(<TestComponent />);
 
-      const { result } = renderHook(() => useTreatment("test-experiment"), {
-        wrapper,
-      });
-
-      expect(result.current.loading).toBe(false);
-      expect(result.current.variant).toBe(1);
+      expect(html).toContain("Variant: 1");
+      expect(html).not.toContain("Loading...");
     });
   });
 

@@ -100,6 +100,40 @@ describe("Fix #2: Stale closure in resetContext (uses ref)", () => {
   });
 });
 
+describe("resetContext finalize failure", () => {
+  it("finalizes the unused replacement and keeps the current context", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let captured: any;
+    let currentContext: any;
+
+    const CaptureComponent = () => {
+      const { resetContext, context } = useABSmartly();
+      captured = resetContext;
+      currentContext = context;
+      return null;
+    };
+
+    render(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <CaptureComponent />
+      </SDKProvider>,
+    );
+
+    const original = currentContext;
+    original.finalize.mockRejectedValueOnce(new Error("publish failed"));
+
+    await act(async () => {
+      await expect(
+        captured({ units: { user_id: "new-user" } }),
+      ).rejects.toThrow("publish failed");
+    });
+
+    const replacement = mockCreateContextWith.mock.results[0].value;
+    expect(replacement.finalize).toHaveBeenCalledTimes(1);
+    expect(currentContext).toBe(original);
+  });
+});
+
 describe("Fix #13: withABSmartly HOC null guard", () => {
   it("should throw when rendered outside SDKProvider", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});

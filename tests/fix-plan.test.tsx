@@ -174,9 +174,8 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
 
     await waitFor(() => {
       const alert = container.querySelector('[role="alert"]');
-      if (alert) {
-        expect(alert.textContent).toContain("Debug error info");
-      }
+      expect(alert).not.toBeNull();
+      expect(alert!.textContent).toContain("Debug error info");
     });
 
     process.env.NODE_ENV = originalEnv;
@@ -274,9 +273,8 @@ describe("Fix #8: Treatment accepts errorComponent prop", () => {
 
     await waitFor(() => {
       const customError = queryByTestId("custom-error");
-      if (customError) {
-        expect(customError.textContent).toBe("Custom Error UI");
-      }
+      expect(customError).not.toBeNull();
+      expect(customError!.textContent).toBe("Custom Error UI");
     });
   });
 });

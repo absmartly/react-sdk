@@ -88,7 +88,12 @@ export const SDKProvider: FC<SDKProviderProps> = ({
           combinedContextOptions,
         );
 
-        await ctx.finalize();
+        try {
+          await ctx.finalize();
+        } catch (finalizeError) {
+          await newContext.finalize().catch(() => {});
+          throw finalizeError;
+        }
 
         setProvidedContext(newContext);
         setContextError(null);
