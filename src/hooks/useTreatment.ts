@@ -19,8 +19,15 @@ export const useTreatment = (name: string, peek = false) => {
 
   useEffect(() => {
     if (isContextReady) {
-      const treatment = peek ? context.peek(name) : context.treatment(name);
-      setVariant(treatment ?? 0);
+      try {
+        const treatment = peek ? context.peek(name) : context.treatment(name);
+        setVariant(treatment ?? 0);
+        setError(null);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        setError(err);
+        console.error(`Failed to get treatment "${name}":`, err);
+      }
       setLoading(false);
       return;
     }
