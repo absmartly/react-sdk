@@ -91,12 +91,17 @@ describe("Fix #2: Stale closure in resetContext (uses ref)", () => {
     });
 
     expect(mockCreateContextWith).toHaveBeenCalledTimes(1);
+    const original = mockCreateContext.mock.results[0].value;
+    const firstReplacement = mockCreateContextWith.mock.results[0].value;
+    expect(original.finalize).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       button.click();
     });
 
     expect(mockCreateContextWith).toHaveBeenCalledTimes(2);
+    expect(original.finalize).toHaveBeenCalledTimes(1);
+    expect(firstReplacement.finalize).toHaveBeenCalledTimes(1);
   });
 });
 
