@@ -1,0 +1,94 @@
+import { useEffect, useState, useRef } from "react";
+import { Context } from "@absmartly/javascript-sdk";
+
+interface UseContextReadyOptions {
+  context: Context | null;
+  name: string;
+  attributes?: Record<string, unknown>;
+  onReady?: (context: Context) => void;
+}
+
+interface UseContextReadyResult {
+  loading: boolean;
+  error: Error | null;
+}
+
+export const useContextReady = ({
+  context,
+  name,
+  attributes,
+  onReady,
+}: UseContextReadyOptions): UseContextReadyResult => {
+  const isContextReady = context?.isReady() ?? false;
+  const [loading, setLoading] = useState<boolean>(!isContextReady);
+  // A context whose initial load failed is still ready: it serves control
+  // and logs exposures like the JavaScript SDK does, so it is not an error here.
+  const [error, setError] = useState<Error | null>(null);
+
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+
+  const attributesRef = useRef(attributes);
+  attributesRef.current = attributes;
+
+  const attributesKey = attributes ? JSON.stringify(attributes) : "";
+
+  useEffect(() => {
+    if (!context) return;
+
+    let cancelled = false;
+
+    try {
+      if (attributesRef.current) {
+        context.attributes(attributesRef.current);
+      }
+
+      if (context.isReady()) {
+        if (onReadyRef.current) {
+          onReadyRef.current(context);
+        }
+        setError(null);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      setError(err);
+      setLoading(false);
+      console.error(`Failed to load treatment "${name}":`, err);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    context
+      .ready()
+      .then(() => {
+        if (!cancelled) {
+          if (attributesRef.current) {
+            context.attributes(attributesRef.current);
+          }
+          if (onReadyRef.current) {
+            onReadyRef.current(context);
+          }
+          setLoading(false);
+          setError(null);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) {
+          const err = e instanceof Error ? e : new Error(String(e));
+          setError(err);
+          setLoading(false);
+          console.error(`Failed to load treatment "${name}":`, err);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [context, name, attributesKey]);
+
+  return { loading, error };
+};

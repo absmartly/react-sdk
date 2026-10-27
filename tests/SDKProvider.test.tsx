@@ -25,30 +25,30 @@ const mockContextData = {
   experiments: [],
 };
 
-const mockContext = {} as Context;
+const mockContext = {
+  getSDK: vi.fn().mockReturnValue({}),
+} as unknown as Context;
 
-const mockCreateContext = vi.fn().mockImplementation(() => {
-  return {
-    ...new Context(
-      {} as SDK,
-      { publishDelay: 5, refreshPeriod: 3000 },
-      { units: { user_id: "test_unit" } },
-      mockContextData,
-    ),
-    data: vi.fn().mockReturnValue(mockContextData),
-  };
+const mockContextOptions = { publishDelay: 5, refreshPeriod: 3000 };
+
+const createMockContext = () => ({
+  data: vi.fn().mockReturnValue(mockContextData),
+  isReady: vi.fn().mockReturnValue(true),
+  isFailed: vi.fn().mockReturnValue(false),
+  treatment: vi.fn().mockReturnValue(0),
+  ready: vi.fn().mockResolvedValue(undefined),
+  attributes: vi.fn(),
+  variableKeys: vi.fn().mockReturnValue({}),
+  peekVariableValue: vi.fn(),
+  finalize: vi.fn().mockResolvedValue(undefined),
+  getOptions: vi.fn().mockReturnValue(mockContextOptions),
+  getSDK: vi.fn().mockReturnValue({}),
 });
 
-const mockCreateContextWith = vi.fn().mockImplementation(() => {
-  return new Context(
-    {} as SDK,
-    { publishDelay: 5, refreshPeriod: 3000 },
-    { units: { user_id: "test_unit" } },
-    mockContextData,
-  );
-});
+const mockCreateContext = vi.fn().mockImplementation(createMockContext);
+const mockCreateContextWith = vi.fn().mockImplementation(createMockContext);
 
-(SDK as MockedClass<typeof SDK>).mockImplementation(() => {
+(SDK as MockedClass<typeof SDK>).mockImplementation(function () {
   return {
     createContext: mockCreateContext,
     createContextWith: mockCreateContextWith,
@@ -203,6 +203,171 @@ describe("SDKProvider", () => {
         refreshPeriod: 5000,
       },
     );
+  });
+
+  it("should allow nested providers with different contexts", () => {
+    const outerContextOptions = {
+      units: { user_id: "outer-user" },
+    };
+    const innerContextOptions = {
+      units: { user_id: "inner-user" },
+    };
+
+    let innerContext: unknown;
+    let outerContext: unknown;
+
+    const InnerComponent = () => {
+      const { context } = useABSmartly();
+      innerContext = context;
+      return (
+        <span data-testid="inner-context">
+          {context ? "has-context" : "no-context"}
+        </span>
+      );
+    };
+
+    const OuterComponent = () => {
+      const { context } = useABSmartly();
+      outerContext = context;
+      return (
+        <div>
+          <span data-testid="outer-context">
+            {context ? "has-context" : "no-context"}
+          </span>
+          <SDKProvider
+            sdkOptions={sdkOptions}
+            contextOptions={innerContextOptions}
+          >
+            <InnerComponent />
+          </SDKProvider>
+        </div>
+      );
+    };
+
+    render(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={outerContextOptions}>
+        <OuterComponent />
+      </SDKProvider>,
+    );
+
+    expect(screen.getByTestId("outer-context")).toHaveTextContent(
+      "has-context",
+    );
+    expect(screen.getByTestId("inner-context")).toHaveTextContent(
+      "has-context",
+    );
+    expect(mockCreateContext).toHaveBeenCalledTimes(2);
+    expect(outerContext).toBe(mockCreateContext.mock.results[0].value);
+    expect(innerContext).toBe(mockCreateContext.mock.results[1].value);
+    expect(innerContext).not.toBe(outerContext);
+  });
+
+  it("should provide context value to multiple children", () => {
+    const Child1 = () => {
+      const { context } = useABSmartly();
+      return <div data-testid="child1">{context ? "yes" : "no"}</div>;
+    };
+
+    const Child2 = () => {
+      const { context } = useABSmartly();
+      return <div data-testid="child2">{context ? "yes" : "no"}</div>;
+    };
+
+    const Child3 = () => {
+      const { sdk } = useABSmartly();
+      return <div data-testid="child3">{sdk ? "yes" : "no"}</div>;
+    };
+
+    render(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <Child1 />
+        <Child2 />
+        <Child3 />
+      </SDKProvider>,
+    );
+
+    expect(screen.getByTestId("child1")).toHaveTextContent("yes");
+    expect(screen.getByTestId("child2")).toHaveTextContent("yes");
+    expect(screen.getByTestId("child3")).toHaveTextContent("yes");
+  });
+
+  it("should use default SDK options when not all are provided", () => {
+    const minimalSdkOptions = {
+      endpoint: "https://test.absmartly.io/v1",
+      apiKey: "test-key",
+      application: "test-app",
+      environment: "test",
+    };
+
+    render(
+      <SDKProvider
+        sdkOptions={minimalSdkOptions}
+        contextOptions={contextOptions}
+      >
+        <TestComponent />
+      </SDKProvider>,
+    );
+
+    expect(SDK).toHaveBeenCalledTimes(1);
+    expect(SDK).toHaveBeenCalledWith(
+      expect.objectContaining({
+        retries: 5,
+        timeout: 3000,
+        ...minimalSdkOptions,
+      }),
+    );
+  });
+
+  it("should allow children to access resetContext and trigger context recreation", async () => {
+    let capturedResetContext: any;
+    let capturedContext: unknown;
+
+    const CaptureComponent = () => {
+      const { context, resetContext } = useABSmartly();
+      capturedContext = context;
+      capturedResetContext = resetContext;
+      return <div>Captured</div>;
+    };
+
+    render(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <CaptureComponent />
+      </SDKProvider>,
+    );
+
+    expect(capturedResetContext).toBeDefined();
+    expect(typeof capturedResetContext).toBe("function");
+    const original = capturedContext;
+    const params = { units: { user_id: "replacement-user" } };
+
+    await act(async () => {
+      await capturedResetContext(params);
+    });
+
+    const replacement = mockCreateContextWith.mock.results[0].value;
+    expect(mockCreateContextWith).toHaveBeenCalledWith(
+      params,
+      mockContextData,
+      expect.any(Object),
+    );
+    expect(capturedContext).toBe(replacement);
+    expect(capturedContext).not.toBe(original);
+  });
+
+  it("creates the provider context only once across rerenders", () => {
+    const { rerender } = render(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <TestComponent />
+      </SDKProvider>,
+    );
+
+    rerender(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <TestComponent />
+      </SDKProvider>,
+    );
+
+    expect(mockCreateContext).toHaveBeenCalledTimes(1);
   });
 });
 
