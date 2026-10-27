@@ -1,10 +1,9 @@
 import { Context } from "@absmartly/javascript-sdk";
 import React, { FC, ReactNode, useState, useCallback } from "react";
 
-declare const process: { env: { NODE_ENV?: string } };
-
 import { useOptionalABSmartly } from "../../hooks/useABSmartly";
 import { useContextReady } from "../../hooks/useContextReady";
+import { ErrorAlert } from "./ErrorAlert";
 
 interface TreatmentFunctionProps {
   name: string;
@@ -46,7 +45,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   const ensuredContext = context ?? absmartly?.context ?? null;
 
   const [variantAndVariables, setVariantAndVariables] = useState<{
-    variant: number | undefined;
+    variant: number;
     variables: Record<string, unknown>;
   }>(() => {
     if (ensuredContext?.isReady()) {
@@ -60,10 +59,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
         return { variant: 0, variables: {} };
       }
     }
-    return {
-      variant: !loadingComponent ? 0 : undefined,
-      variables: {},
-    };
+    return { variant: 0, variables: {} };
   });
 
   const handleContextReady = useCallback(() => {
@@ -88,20 +84,7 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
   }
 
   if (error) {
-    return (
-      <div
-        role="alert"
-        style={{
-          padding: "10px",
-          border: "1px solid red",
-          borderRadius: "4px",
-          backgroundColor: "#fee",
-        }}
-      >
-        <strong>Failed to load experiment "{name}"</strong>
-        {process.env.NODE_ENV === "development" && <p>{error.message}</p>}
-      </div>
-    );
+    return <ErrorAlert name={name} error={error} />;
   }
 
   if (loading) {
@@ -112,12 +95,5 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     );
   }
 
-  return (
-    <>
-      {children({
-        ...variantAndVariables,
-        variant: variantAndVariables.variant ?? 0,
-      })}
-    </>
-  );
+  return <>{children(variantAndVariables)}</>;
 };

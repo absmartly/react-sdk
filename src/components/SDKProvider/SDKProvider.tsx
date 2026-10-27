@@ -59,7 +59,7 @@ export const SDKProvider: FC<SDKProviderProps> = ({
     });
   });
 
-  const [providedContext, setProvidedContext] = useState(
+  const [providedContext, setProvidedContext] = useState(() =>
     context ? context : sdk.createContext(contextOptions),
   );
 

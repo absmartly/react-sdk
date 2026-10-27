@@ -3,9 +3,8 @@ import { Char } from "../types";
 export const convertLetterToNumber = (char: Char | number): number => {
   if (typeof char === "number") return char;
 
-  const parsed = parseInt(char, 10);
-  if (!Number.isNaN(parsed)) {
-    return parsed;
+  if (/^[+-]?\d+$/.test(char)) {
+    return parseInt(char, 10);
   }
 
   if (typeof char === "string" && char.length === 1) {

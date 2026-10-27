@@ -25,7 +25,7 @@ The A/B Smartly React SDK is compatible with:
 - Only use **publishable/public keys** with **read-only permissions** in browser applications
 - **NEVER** use secret keys with write permissions in client-side code
 - For write operations or sensitive API calls, implement a **server-side proxy**:
-  ```
+  ```text
   Browser --> Your Backend (with secret key) --> ABSmartly API
   ```
 

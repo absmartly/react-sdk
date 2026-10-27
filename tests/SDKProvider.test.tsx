@@ -31,37 +31,22 @@ const mockContext = {
 
 const mockContextOptions = { publishDelay: 5, refreshPeriod: 3000 };
 
-const mockCreateContext = vi.fn().mockImplementation(function () {
-  return {
-    data: vi.fn().mockReturnValue(mockContextData),
-    isReady: vi.fn().mockReturnValue(true),
-    isFailed: vi.fn().mockReturnValue(false),
-    treatment: vi.fn().mockReturnValue(0),
-    ready: vi.fn().mockResolvedValue(undefined),
-    attributes: vi.fn(),
-    variableKeys: vi.fn().mockReturnValue({}),
-    peekVariableValue: vi.fn(),
-    finalize: vi.fn().mockResolvedValue(undefined),
-    getOptions: vi.fn().mockReturnValue(mockContextOptions),
-    getSDK: vi.fn().mockReturnValue({}),
-  };
+const createMockContext = () => ({
+  data: vi.fn().mockReturnValue(mockContextData),
+  isReady: vi.fn().mockReturnValue(true),
+  isFailed: vi.fn().mockReturnValue(false),
+  treatment: vi.fn().mockReturnValue(0),
+  ready: vi.fn().mockResolvedValue(undefined),
+  attributes: vi.fn(),
+  variableKeys: vi.fn().mockReturnValue({}),
+  peekVariableValue: vi.fn(),
+  finalize: vi.fn().mockResolvedValue(undefined),
+  getOptions: vi.fn().mockReturnValue(mockContextOptions),
+  getSDK: vi.fn().mockReturnValue({}),
 });
 
-const mockCreateContextWith = vi.fn().mockImplementation(function () {
-  return {
-    data: vi.fn().mockReturnValue(mockContextData),
-    isReady: vi.fn().mockReturnValue(true),
-    isFailed: vi.fn().mockReturnValue(false),
-    treatment: vi.fn().mockReturnValue(0),
-    ready: vi.fn().mockResolvedValue(undefined),
-    attributes: vi.fn(),
-    variableKeys: vi.fn().mockReturnValue({}),
-    peekVariableValue: vi.fn(),
-    finalize: vi.fn().mockResolvedValue(undefined),
-    getOptions: vi.fn().mockReturnValue(mockContextOptions),
-    getSDK: vi.fn().mockReturnValue({}),
-  };
-});
+const mockCreateContext = vi.fn().mockImplementation(createMockContext);
+const mockCreateContextWith = vi.fn().mockImplementation(createMockContext);
 
 (SDK as MockedClass<typeof SDK>).mockImplementation(function () {
   return {
@@ -228,8 +213,12 @@ describe("SDKProvider", () => {
       units: { user_id: "inner-user" },
     };
 
+    let innerContext: unknown;
+    let outerContext: unknown;
+
     const InnerComponent = () => {
       const { context } = useABSmartly();
+      innerContext = context;
       return (
         <span data-testid="inner-context">
           {context ? "has-context" : "no-context"}
@@ -239,6 +228,7 @@ describe("SDKProvider", () => {
 
     const OuterComponent = () => {
       const { context } = useABSmartly();
+      outerContext = context;
       return (
         <div>
           <span data-testid="outer-context">
@@ -267,6 +257,9 @@ describe("SDKProvider", () => {
       "has-context",
     );
     expect(mockCreateContext).toHaveBeenCalledTimes(2);
+    expect(outerContext).toBe(mockCreateContext.mock.results[0].value);
+    expect(innerContext).toBe(mockCreateContext.mock.results[1].value);
+    expect(innerContext).not.toBe(outerContext);
   });
 
   it("should provide context value to multiple children", () => {
@@ -327,9 +320,11 @@ describe("SDKProvider", () => {
 
   it("should allow children to access resetContext and trigger context recreation", async () => {
     let capturedResetContext: any;
+    let capturedContext: unknown;
 
     const CaptureComponent = () => {
-      const { resetContext } = useABSmartly();
+      const { context, resetContext } = useABSmartly();
+      capturedContext = context;
       capturedResetContext = resetContext;
       return <div>Captured</div>;
     };
@@ -342,6 +337,37 @@ describe("SDKProvider", () => {
 
     expect(capturedResetContext).toBeDefined();
     expect(typeof capturedResetContext).toBe("function");
+    const original = capturedContext;
+    const params = { units: { user_id: "replacement-user" } };
+
+    await act(async () => {
+      await capturedResetContext(params);
+    });
+
+    const replacement = mockCreateContextWith.mock.results[0].value;
+    expect(mockCreateContextWith).toHaveBeenCalledWith(
+      params,
+      mockContextData,
+      expect.any(Object),
+    );
+    expect(capturedContext).toBe(replacement);
+    expect(capturedContext).not.toBe(original);
+  });
+
+  it("creates the provider context only once across rerenders", () => {
+    const { rerender } = render(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <TestComponent />
+      </SDKProvider>,
+    );
+
+    rerender(
+      <SDKProvider sdkOptions={sdkOptions} contextOptions={contextOptions}>
+        <TestComponent />
+      </SDKProvider>,
+    );
+
+    expect(mockCreateContext).toHaveBeenCalledTimes(1);
   });
 });
 

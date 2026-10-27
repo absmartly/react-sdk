@@ -23,7 +23,7 @@ export const useTreatment = (name: string, peek = false) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (isContextReady) {
+    if (context.isReady()) {
       try {
         const treatment = peek ? context.peek(name) : context.treatment(name);
         setVariant(treatment ?? 0);
@@ -65,7 +65,7 @@ export const useTreatment = (name: string, peek = false) => {
     return () => {
       cancelled = true;
     };
-  }, [context, name, peek, isContextReady]);
+  }, [context, name, peek]);
 
   return { variant, loading, error, context };
 };

@@ -9,7 +9,6 @@ interface ErrorBoundaryProps {
 }
 
 interface ErrorBoundaryState {
-  hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
@@ -21,17 +20,13 @@ export class ErrorBoundary extends Component<
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
-      hasError: false,
       error: null,
       errorInfo: null,
     };
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
-    return {
-      hasError: true,
-      error,
-    };
+    return { error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
@@ -51,7 +46,7 @@ export class ErrorBoundary extends Component<
   }
 
   render(): ReactNode {
-    if (this.state.hasError && this.state.error) {
+    if (this.state.error) {
       if (this.props.fallback) {
         if (typeof this.props.fallback === "function") {
           return this.props.fallback(

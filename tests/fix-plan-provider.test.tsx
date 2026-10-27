@@ -18,7 +18,7 @@ afterEach(() => {
 const mockContextData = { experiments: [] };
 const mockContextOptions = { publishDelay: 5, refreshPeriod: 3000 };
 
-const mockCreateContext = vi.fn().mockImplementation(() => ({
+const createMockContext = () => ({
   data: vi.fn().mockReturnValue(mockContextData),
   isReady: vi.fn().mockReturnValue(true),
   isFailed: vi.fn().mockReturnValue(false),
@@ -30,21 +30,10 @@ const mockCreateContext = vi.fn().mockImplementation(() => ({
   finalize: vi.fn().mockResolvedValue(undefined),
   getOptions: vi.fn().mockReturnValue(mockContextOptions),
   getSDK: vi.fn().mockReturnValue({}),
-}));
+});
 
-const mockCreateContextWith = vi.fn().mockImplementation(() => ({
-  data: vi.fn().mockReturnValue(mockContextData),
-  isReady: vi.fn().mockReturnValue(true),
-  isFailed: vi.fn().mockReturnValue(false),
-  treatment: vi.fn().mockReturnValue(0),
-  ready: vi.fn().mockResolvedValue(undefined),
-  attributes: vi.fn(),
-  variableKeys: vi.fn().mockReturnValue({}),
-  peekVariableValue: vi.fn(),
-  finalize: vi.fn().mockResolvedValue(undefined),
-  getOptions: vi.fn().mockReturnValue(mockContextOptions),
-  getSDK: vi.fn().mockReturnValue({}),
-}));
+const mockCreateContext = vi.fn().mockImplementation(createMockContext);
+const mockCreateContextWith = vi.fn().mockImplementation(createMockContext);
 
 (SDK as MockedClass<typeof SDK>).mockImplementation(function () {
   return {

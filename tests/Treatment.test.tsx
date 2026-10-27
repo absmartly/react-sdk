@@ -93,11 +93,6 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     const ready = Promise.resolve(true);
     mocks.context.ready.mockReturnValue(ready);
 
-    const attributes = {
-      attr1: 15,
-      attr2: 50,
-    };
-
     render(
       <Treatment context={mocks.context} name="test_exp">
         <TestComponent variant="0">
@@ -117,7 +112,6 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
       TestComponent.mockClear();
     });
 
-    const config = { a: 1, b: 2 };
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
     mocks.context.peek.mockReturnValue(1);
@@ -249,7 +243,7 @@ describe("Treatment Component (TreatmentVariants as children)", () => {
     mockedUseOptionalABSmartly.mockReturnValue({
       context: mocks.context,
       sdk: null as unknown as SDK,
-      resetContext: () => {},
+      resetContext: vi.fn().mockResolvedValue(undefined),
     });
 
     const TestComponent = vi.fn();

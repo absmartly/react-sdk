@@ -81,7 +81,6 @@ describe("TreatmentFunction Component", () => {
       expect(TestLoadingComponent).toHaveBeenCalledTimes(1);
     });
 
-    const config = { a: 1, b: 2 };
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
     mocks.context.peek.mockReturnValue(1);
@@ -102,11 +101,6 @@ describe("TreatmentFunction Component", () => {
 
     const ready = Promise.resolve(true);
     mocks.context.ready.mockReturnValue(ready);
-
-    const attributes = {
-      attr1: 15,
-      attr2: 50,
-    };
 
     render(
       <TreatmentFunction context={mocks.context} name="test_exp">
@@ -129,7 +123,6 @@ describe("TreatmentFunction Component", () => {
       TestComponent.mockClear();
     });
 
-    const config = { a: 1, b: 2 };
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(1);
     mocks.context.peek.mockReturnValue(1);
@@ -185,7 +178,7 @@ describe("TreatmentFunction Component", () => {
     mockedUseOptionalABSmartly.mockReturnValue({
       context: mocks.context,
       sdk: null as unknown as SDK,
-      resetContext: () => {},
+      resetContext: vi.fn().mockResolvedValue(undefined),
     });
 
     mocks.context.isReady.mockReturnValue(true);

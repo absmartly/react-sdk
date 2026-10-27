@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import React, { forwardRef, ComponentType } from "react";
+import React, { ComponentType } from "react";
 import { afterEach, describe, expect, it, vi, MockedClass } from "vitest";
 
 import { Context, SDK } from "@absmartly/javascript-sdk";

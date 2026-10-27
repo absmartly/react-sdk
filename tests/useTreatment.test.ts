@@ -30,7 +30,7 @@ beforeEach(() => {
   mockedUseABSmartly.mockReturnValue({
     context: mockContext as unknown as Context,
     sdk: null as unknown as SDK,
-    resetContext: () => {},
+    resetContext: vi.fn().mockResolvedValue(undefined),
   });
 });
 
@@ -55,6 +55,25 @@ describe("useTreatment", () => {
       expect(result.current.variant).toBe(1);
       expect(result.current.error).toBe(null);
     });
+  });
+
+  it("evaluates once after asynchronous readiness", async () => {
+    let resolveReady!: () => void;
+    mockContext.ready.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveReady = () => {
+          mockContext.isReady.mockReturnValue(true);
+          resolve();
+        };
+      }),
+    );
+    mockContext.treatment.mockReturnValue(1);
+
+    const { result } = renderHook(() => useTreatment("experiment-name"));
+    resolveReady();
+
+    await waitFor(() => expect(result.current.variant).toBe(1));
+    expect(mockContext.treatment).toHaveBeenCalledTimes(1);
   });
 
   it("should handle errors correctly", async () => {
@@ -175,7 +194,7 @@ describe("useTreatment", () => {
     mockedUseABSmartly.mockReturnValue({
       context: firstContext as unknown as Context,
       sdk: null as unknown as SDK,
-      resetContext: () => {},
+      resetContext: vi.fn().mockResolvedValue(undefined),
     });
 
     const { result, rerender } = renderHook(() =>
@@ -189,7 +208,7 @@ describe("useTreatment", () => {
     mockedUseABSmartly.mockReturnValue({
       context: secondContext as unknown as Context,
       sdk: null as unknown as SDK,
-      resetContext: () => {},
+      resetContext: vi.fn().mockResolvedValue(undefined),
     });
 
     rerender();

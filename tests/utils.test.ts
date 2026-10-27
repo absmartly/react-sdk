@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { convertLetterToNumber } from "../src/utils/convertLetterToNumber";
 
 describe("convertLetterToNumber", () => {
@@ -68,5 +68,19 @@ describe("convertLetterToNumber", () => {
       expect(convertLetterToNumber("0")).toBe(0);
       expect(convertLetterToNumber("1")).toBe(1);
     });
+  });
+
+  describe("invalid input handling", () => {
+    it.each(["1junk", "ab", "!", "@", ""])(
+      "returns 0 and warns for %j",
+      (input) => {
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        expect(convertLetterToNumber(input)).toBe(0);
+        expect(warnSpy).toHaveBeenCalledWith(
+          `convertLetterToNumber: Invalid input "${input}". Returning 0.`,
+        );
+        warnSpy.mockRestore();
+      },
+    );
   });
 });

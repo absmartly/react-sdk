@@ -5,16 +5,14 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
-  useRef,
 } from "react";
-
-declare const process: { env: { NODE_ENV?: string } };
 
 import { Context } from "@absmartly/javascript-sdk";
 import { useOptionalABSmartly } from "../../hooks/useABSmartly";
 import { useContextReady } from "../../hooks/useContextReady";
 import { Char } from "../../types";
 import { convertLetterToNumber } from "../../utils/convertLetterToNumber";
+import { ErrorAlert } from "./ErrorAlert";
 
 interface TreatmentProps {
   name: string;
@@ -51,7 +49,7 @@ export const Treatment: FC<TreatmentProps> = ({
           return { variant: 0 };
         }
 
-        const variant = (child.props as any).variant;
+        const { variant } = child.props as Partial<TreatmentVariantProps>;
         if (variant === undefined) {
           console.warn(
             `Treatment "${name}": Child missing "variant" prop. Using variant 0.`,
@@ -64,23 +62,18 @@ export const Treatment: FC<TreatmentProps> = ({
     [childrenArray, name],
   );
 
-  const childrenInfoRef = useRef(childrenInfo);
-  childrenInfoRef.current = childrenInfo;
-
   const getSelectedChildIndex = useCallback(
     (ctx: Context, expose: boolean): number => {
       const treatment = expose ? ctx.treatment(name) : ctx.peek(name);
       const targetVariant = treatment ?? 0;
-      const info = childrenInfoRef.current;
-
-      if (!info || info.length === 0) {
+      if (childrenInfo.length === 0) {
         console.warn(
           `Treatment "${name}": No children available. Defaulting to variant 0.`,
         );
         return 0;
       }
 
-      const index = info.findIndex(
+      const index = childrenInfo.findIndex(
         (x) => convertLetterToNumber(x.variant) === targetVariant,
       );
 
@@ -93,7 +86,7 @@ export const Treatment: FC<TreatmentProps> = ({
 
       return index;
     },
-    [name],
+    [childrenInfo, name],
   );
 
   const [selectedTreatment, setSelectedTreatment] = useState(() => {
@@ -117,7 +110,7 @@ export const Treatment: FC<TreatmentProps> = ({
     ) {
       setSelectedTreatment(getSelectedChildIndex(ensuredContext, false));
     }
-  }, [childrenInfo, ensuredContext, getSelectedChildIndex]);
+  }, [ensuredContext, getSelectedChildIndex]);
 
   const handleContextReady = useCallback(() => {
     if (ensuredContext) {
@@ -143,20 +136,7 @@ export const Treatment: FC<TreatmentProps> = ({
     if (errorComponent) {
       return <>{errorComponent}</>;
     }
-    return (
-      <div
-        role="alert"
-        style={{
-          padding: "10px",
-          border: "1px solid red",
-          borderRadius: "4px",
-          backgroundColor: "#fee",
-        }}
-      >
-        <strong>Failed to load experiment "{name}"</strong>
-        {process.env.NODE_ENV === "development" && <p>{error.message}</p>}
-      </div>
-    );
+    return <ErrorAlert name={name} error={error} />;
   }
 
   if (loading) {

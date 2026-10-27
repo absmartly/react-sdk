@@ -18,7 +18,6 @@ import {
   Treatment,
   TreatmentVariant,
 } from "../src";
-import { SDKProvider } from "../src/components/SDKProvider";
 
 vi.mock("../src/hooks/useABSmartly");
 
@@ -48,7 +47,7 @@ describe("SSR Support", () => {
       mockedUseABSmartly.mockReturnValue({
         context: mockContext as unknown as Context,
         sdk: null as unknown as SDK,
-        resetContext: () => {},
+        resetContext: vi.fn().mockResolvedValue(undefined),
       });
 
       const TestComponent = () => {
@@ -77,7 +76,7 @@ describe("SSR Support", () => {
       mockedUseABSmartly.mockReturnValue({
         context: mockContext as unknown as Context,
         sdk: null as unknown as SDK,
-        resetContext: () => {},
+        resetContext: vi.fn().mockResolvedValue(undefined),
       });
 
       const TestComponent = () => {
@@ -99,7 +98,7 @@ describe("SSR Support", () => {
       mockedUseABSmartly.mockReturnValue({
         context: mockContext as unknown as Context,
         sdk: null as unknown as SDK,
-        resetContext: () => {},
+        resetContext: vi.fn().mockResolvedValue(undefined),
       });
 
       const html = renderToString(
@@ -124,7 +123,7 @@ describe("SSR Support", () => {
       mockedUseABSmartly.mockReturnValue({
         context: mockContext as unknown as Context,
         sdk: null as unknown as SDK,
-        resetContext: () => {},
+        resetContext: vi.fn().mockResolvedValue(undefined),
       });
 
       const html = renderToString(
@@ -148,7 +147,7 @@ describe("SSR Support", () => {
       mockedUseABSmartly.mockReturnValue({
         context: mockContext as unknown as Context,
         sdk: null as unknown as SDK,
-        resetContext: () => {},
+        resetContext: vi.fn().mockResolvedValue(undefined),
       });
 
       const html = renderToString(
@@ -180,7 +179,7 @@ describe("SSR Support", () => {
       mockedUseABSmartly.mockReturnValue({
         context: mockContext as unknown as Context,
         sdk: null as unknown as SDK,
-        resetContext: () => {},
+        resetContext: vi.fn().mockResolvedValue(undefined),
       });
 
       const { result } = renderHook(() => useTreatment("experiment"));

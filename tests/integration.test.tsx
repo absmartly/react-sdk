@@ -1,10 +1,9 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import React, { Suspense, Component, ReactNode } from "react";
-import { afterEach, describe, expect, it, vi, MockedClass } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { Context, SDK } from "@absmartly/javascript-sdk";
+import { Context } from "@absmartly/javascript-sdk";
 
-import { SDKProvider } from "../src/components/SDKProvider";
 import {
   Treatment,
   TreatmentVariant,
@@ -34,28 +33,6 @@ const createMockContext = (treatment: number, isReady = true) => ({
   variableKeys: vi.fn().mockReturnValue({}),
   peekVariableValue: vi.fn(),
 });
-
-const mockCreateContext = vi.fn();
-
-(SDK as MockedClass<typeof SDK>).mockImplementation(function () {
-  return {
-    createContext: mockCreateContext,
-    createContextWith: vi.fn(),
-  } as unknown as SDK;
-});
-
-const sdkOptions = {
-  endpoint: "https://sandbox.absmartly.io/v1",
-  apiKey: "test-api-key",
-  application: "www",
-  environment: "test",
-};
-
-const contextOptions = {
-  units: {
-    user_id: "test-user-id",
-  },
-};
 
 describe("Integration Tests", () => {
   describe("Multiple Treatments in Tree", () => {
