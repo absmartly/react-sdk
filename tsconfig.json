@@ -14,9 +14,6 @@
     "noUnusedParameters": true,
     "esModuleInterop": true,
     "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true
   },

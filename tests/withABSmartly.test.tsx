@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import React, { ComponentType } from "react";
 import { afterEach, describe, expect, it, vi, MockedClass } from "vitest";
 
-import { Context, SDK } from "@absmartly/javascript-sdk";
+import { SDK } from "@absmartly/javascript-sdk";
 import { SDKProvider } from "../src/components/SDKProvider";
 import { withABSmartly } from "../src/hooks/HOCs/withABSmartly";
 import { ABSmartly } from "../src/types";
@@ -29,8 +29,6 @@ const mockCreateContext = vi.fn().mockImplementation(function () {
     variableKeys: vi.fn().mockReturnValue({}),
     peekVariableValue: vi.fn(),
     finalize: vi.fn().mockResolvedValue(undefined),
-    _opts: { publishDelay: 5, refreshPeriod: 3000 },
-    _sdk: {},
   };
 });
 

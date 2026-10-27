@@ -13,7 +13,10 @@ vi.mock("../src/hooks/useABSmartly");
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+  vi.resetAllMocks();
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  mocks.context.variableKeys.mockReturnValue({ "button.color": "red" });
   mocks.context.isFailed.mockReturnValue(false);
 });
 
@@ -127,8 +130,7 @@ describe("Fix #3: useContextReady calls onReady when initially ready", () => {
 
 describe("Fix #4 & #15: Error messages hidden in production", () => {
   it("Treatment should not show error.message in production", async () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
 
     mocks.context.isReady.mockReturnValue(false);
     mocks.context.isFailed.mockReturnValue(true);
@@ -149,13 +151,10 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
       expect(alert).not.toBeNull();
       expect(alert!.textContent).not.toContain("Secret API error");
     });
-
-    process.env.NODE_ENV = originalEnv;
   });
 
   it("Treatment should show error.message in development", async () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
 
     mocks.context.isReady.mockReturnValue(false);
     mocks.context.isFailed.mockReturnValue(true);
@@ -176,13 +175,10 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
       expect(alert).not.toBeNull();
       expect(alert!.textContent).toContain("Debug error info");
     });
-
-    process.env.NODE_ENV = originalEnv;
   });
 
   it("TreatmentFunction should not show error.message in production", async () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
 
     mocks.context.isReady.mockReturnValue(false);
     mocks.context.isFailed.mockReturnValue(true);
@@ -201,13 +197,10 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
       expect(alert).not.toBeNull();
       expect(alert!.textContent).not.toContain("Secret error");
     });
-
-    process.env.NODE_ENV = originalEnv;
   });
 
   it("ErrorBoundary should show generic message in production", () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
 
     vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -223,13 +216,10 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
 
     expect(container.textContent).toContain("Something went wrong.");
     expect(container.textContent).not.toContain("Internal secret");
-
-    process.env.NODE_ENV = originalEnv;
   });
 
   it("ErrorBoundary should show error message in development", () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
 
     vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -244,8 +234,6 @@ describe("Fix #4 & #15: Error messages hidden in production", () => {
     );
 
     expect(container.textContent).toContain("Debug details here");
-
-    process.env.NODE_ENV = originalEnv;
   });
 });
 
@@ -304,33 +292,34 @@ describe("Fix #10: childrenInfo memoized in Treatment", () => {
 });
 
 describe("Fix #11: useContextReady uses refs for onReady and attributes", () => {
-  it("should not cause excessive renders with inline attributes", async () => {
-    const renderCount = vi.fn();
-
+  it("keeps SDK calls bounded across rerenders with inline attributes", async () => {
     mocks.context.isReady.mockReturnValue(true);
     mocks.context.treatment.mockReturnValue(0);
     mocks.context.peek.mockReturnValue(0);
 
-    const TestComponent = () => {
-      renderCount();
-      return (
-        <Treatment
-          context={mocks.context}
-          name="test_exp"
-          attributes={{ key: "value" }}
-        >
-          <TreatmentVariant variant="0">
-            <p>Control</p>
-          </TreatmentVariant>
-        </Treatment>
-      );
-    };
+    const TestComponent = () => (
+      <Treatment
+        context={mocks.context}
+        name="test_exp"
+        attributes={{ key: "value" }}
+      >
+        <TreatmentVariant variant="0">
+          <p>Control</p>
+        </TreatmentVariant>
+      </Treatment>
+    );
 
-    render(<TestComponent />);
+    const { rerender } = render(<TestComponent />);
+    await screen.findByText("Control");
 
-    await waitFor(() => {
-      expect(renderCount.mock.calls.length).toBeLessThan(10);
-    });
+    for (let i = 0; i < 5; i++) {
+      rerender(<TestComponent />);
+    }
+
+    expect(mocks.context.attributes).toHaveBeenCalledWith({ key: "value" });
+    expect(mocks.context.attributes).toHaveBeenCalledTimes(2);
+    expect(mocks.context.treatment).toHaveBeenCalledWith("test_exp");
+    expect(mocks.context.treatment).toHaveBeenCalledTimes(1);
   });
 });
 
