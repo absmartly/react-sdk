@@ -112,11 +112,11 @@ export const Treatment: FC<TreatmentProps> = ({
     }
   }, [ensuredContext, getSelectedChildIndex]);
 
-  const handleContextReady = useCallback(() => {
+  const handleContextReady = () => {
     if (ensuredContext) {
       setSelectedTreatment(getSelectedChildIndex(ensuredContext, true));
     }
-  }, [ensuredContext, getSelectedChildIndex]);
+  };
 
   const { loading, error } = useContextReady({
     context: ensuredContext,

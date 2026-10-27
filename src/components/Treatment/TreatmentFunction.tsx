@@ -1,5 +1,5 @@
 import { Context } from "@absmartly/javascript-sdk";
-import React, { FC, ReactNode, useState, useCallback } from "react";
+import React, { FC, ReactNode, useState } from "react";
 
 import { useOptionalABSmartly } from "../../hooks/useABSmartly";
 import { useContextReady } from "../../hooks/useContextReady";
@@ -62,12 +62,12 @@ export const TreatmentFunction: FC<TreatmentFunctionProps> = ({
     return { variant: 0, variables: {} };
   });
 
-  const handleContextReady = useCallback(() => {
+  const handleContextReady = () => {
     if (ensuredContext) {
       const result = getVariantAndVariables(ensuredContext, name, true);
       setVariantAndVariables(result);
     }
-  }, [ensuredContext, name]);
+  };
 
   const { loading, error } = useContextReady({
     context: ensuredContext,
