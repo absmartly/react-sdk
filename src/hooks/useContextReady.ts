@@ -21,11 +21,9 @@ export const useContextReady = ({
 }: UseContextReadyOptions): UseContextReadyResult => {
   const isContextReady = context?.isReady() ?? false;
   const [loading, setLoading] = useState<boolean>(!isContextReady);
-  const [error, setError] = useState<Error | null>(() =>
-    isContextReady && context?.isFailed?.()
-      ? new Error(`ABsmartly context failed to initialize for "${name}"`)
-      : null,
-  );
+  // A context whose initial load failed is still ready: it serves control
+  // and logs exposures like the JavaScript SDK does, so it is not an error here.
+  const [error, setError] = useState<Error | null>(null);
 
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
@@ -40,20 +38,12 @@ export const useContextReady = ({
 
     let cancelled = false;
 
-    const failure = () =>
-      new Error(`ABsmartly context failed to initialize for "${name}"`);
-
     try {
       if (attributesRef.current) {
         context.attributes(attributesRef.current);
       }
 
       if (context.isReady()) {
-        if (context.isFailed?.()) {
-          setError(failure());
-          setLoading(false);
-          return;
-        }
         if (onReadyRef.current) {
           onReadyRef.current(context);
         }
@@ -76,11 +66,6 @@ export const useContextReady = ({
       .ready()
       .then(() => {
         if (!cancelled) {
-          if (context.isFailed?.()) {
-            setError(failure());
-            setLoading(false);
-            return;
-          }
           if (attributesRef.current) {
             context.attributes(attributesRef.current);
           }
