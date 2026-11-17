@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  assertRepositoryMatches,
   assertTagMatchesVersion,
   assertValidDistTag,
   parseVersion,
@@ -10,10 +12,18 @@ import {
 
 const SCRIPT = resolve(__dirname, "../.github/scripts/publish-checks.mjs");
 
+const REPO_ENV = {
+  REPOSITORY: JSON.stringify({
+    type: "git",
+    url: "git+https://github.com/absmartly/react-sdk.git",
+  }),
+  GITHUB_REPOSITORY: "absmartly/react-sdk",
+};
+
 function runScript(env: Record<string, string>) {
   try {
     const stdout = execFileSync(process.execPath, [SCRIPT], {
-      env: { PATH: process.env.PATH ?? "", ...env },
+      env: { PATH: process.env.PATH ?? "", ...REPO_ENV, ...env },
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -78,6 +88,42 @@ describe("assertTagMatchesVersion", () => {
   });
 });
 
+describe("assertRepositoryMatches", () => {
+  it.each([
+    [{ type: "git", url: "git+https://github.com/absmartly/react-sdk.git" }],
+    [{ url: "https://github.com/absmartly/react-sdk" }],
+    ["https://github.com/Absmartly/React-SDK.git"],
+  ])("accepts %j", (repository) => {
+    expect(() =>
+      assertRepositoryMatches(repository, "absmartly/react-sdk"),
+    ).not.toThrow();
+  });
+
+  it.each([
+    [undefined],
+    [null],
+    [{}],
+    [""],
+    [{ url: "git+https://github.com/absmartly/javascript-sdk.git" }],
+    [{ url: "git+https://github.com/absmartly/react-sdk-fork.git" }],
+    [{ url: "git+https://gitlab.com/absmartly/react-sdk.git" }],
+  ])("rejects %j", (repository) => {
+    expect(() =>
+      assertRepositoryMatches(repository, "absmartly/react-sdk"),
+    ).toThrow(/must be https:\/\/github.com\/absmartly\/react-sdk/);
+  });
+
+  it("matches this package.json", () => {
+    expect(() =>
+      assertRepositoryMatches(
+        JSON.parse(readFileSync(resolve(__dirname, "../package.json"), "utf8"))
+          .repository,
+        "absmartly/react-sdk",
+      ),
+    ).not.toThrow();
+  });
+});
+
 describe("assertValidDistTag", () => {
   it.each(["v1", "v1.4", "1", "1.4.2", "v1.x", "=1", "x", "X", "*", "x.x"])(
     "rejects %s",
@@ -115,6 +161,8 @@ describe("resolveDistTag", () => {
     ["2.0.0-rc.1", "1.4.2", "rc"],
     ["1.5.0-beta.0", "2.0.0", "v1-beta"],
     ["1.4.3-0", "1.4.2", "next"],
+    ["2.0.0-latest.1", "1.4.2", "next"],
+    ["1.5.0-latest", "2.0.0", "v1-next"],
   ])("version %s with latest %s -> %j", (version, latest, expected) => {
     expect(resolveDistTag(version, latest)).toBe(expected);
   });
@@ -206,6 +254,19 @@ describe("publish-checks CLI", () => {
       REQUIRE_TAG: "false",
     });
     expect(result).toMatchObject({ code: 0, stdout: "" });
+  });
+
+  it("fails when package.json has no repository", () => {
+    const result = runScript({
+      VERSION: "1.4.3",
+      LATEST_VERSION: "1.4.2",
+      REF_TYPE: "branch",
+      REF_NAME: "main",
+      REQUIRE_TAG: "false",
+      REPOSITORY: "",
+    });
+    expect(result.code).toBe(1);
+    expect(result.stderr).toMatch(/repository.url "" must be/);
   });
 
   it("fails when the version is invalid", () => {

@@ -76,22 +76,32 @@ jobs:
         id: release
         shell: bash
         env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
           REQUIRE_TAG: ${{ github.event_name == 'push' || inputs.dry_run == false }}
         run: |
           set -euo pipefail
           VERSION=$(node -p "require('./package.json').version")
+          REPOSITORY=$(node -p "JSON.stringify(require('./package.json').repository ?? null)")
           LATEST_VERSION=$(npm view @absmartly/react-sdk dist-tags.latest)
           if [ -z "$LATEST_VERSION" ]; then
             echo "::error::Could not read the current latest version from npm" >&2
             exit 1
           fi
-          export VERSION LATEST_VERSION
+          # As in javascript-sdk: an already published version (e.g. a re-run)
+          # is a green no-op rather than a failing publish.
+          ALREADY_PUBLISHED=false
+          if npm view @absmartly/react-sdk versions --json | jq -e --arg v "$VERSION" 'index($v) != null' >/dev/null; then
+            ALREADY_PUBLISHED=true
+            echo "::notice::@absmartly/react-sdk@${VERSION} is already on npm; publish will be skipped"
+          fi
+          export VERSION REPOSITORY LATEST_VERSION
           DIST_TAG=$(node .github/scripts/publish-checks.mjs)
           echo "Publishing ${VERSION} (npm latest: ${LATEST_VERSION}, dist-tag: ${DIST_TAG:-latest})"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "already_published=${ALREADY_PUBLISHED}" >> "$GITHUB_OUTPUT"
 
       - name: Preview package contents
         run: npm pack --dry-run --ignore-scripts
@@ -99,7 +109,9 @@ jobs:
       # --ignore-scripts: the build above is the tested artifact; the prepack
       # script would otherwise run `yarn upgrade` and rebuild with other deps.
       - name: Publish to npm
-        if: github.event_name == 'push' || inputs.dry_run == false
+        if: >-
+          steps.release.outputs.already_published != 'true' &&
+          (github.event_name == 'push' || inputs.dry_run == false)
         shell: bash
         env:
           DIST_TAG: ${{ steps.release.outputs.dist_tag }}

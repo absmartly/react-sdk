@@ -27,6 +27,20 @@ export function assertTagMatchesVersion(tag, version) {
   }
 }
 
+// Provenance and Trusted Publishing require package.json repository.url to
+// point at the GitHub repository running the workflow.
+export function assertRepositoryMatches(repository, githubRepository) {
+  const url = typeof repository === "string" ? repository : repository?.url;
+  const match = /^(?:git\+)?https:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?$/.exec(
+    url ?? "",
+  );
+  if (!match || match[1].toLowerCase() !== githubRepository?.toLowerCase()) {
+    throw new Error(
+      `package.json repository.url "${url ?? ""}" must be https://github.com/${githubRepository}`,
+    );
+  }
+}
+
 function compareRelease(a, b) {
   return a.major - b.major || a.minor - b.minor || a.patch - b.patch;
 }
@@ -58,7 +72,10 @@ function distTagFor(version, latestVersion) {
   const olderMajor = current.major < latest.major;
   if (current.prerelease.length > 0) {
     const first = current.prerelease[0];
-    const id = /^[A-Za-z][0-9A-Za-z-]*$/.test(first) ? first : "next";
+    const id =
+      /^[A-Za-z][0-9A-Za-z-]*$/.test(first) && first !== "latest"
+        ? first
+        : "next";
     return olderMajor ? `v${current.major}-${id}` : id;
   }
   if (olderMajor) return `v${current.major}-latest`;
@@ -69,8 +86,16 @@ function distTagFor(version, latestVersion) {
 }
 
 function main() {
-  const { VERSION, REF_TYPE, REF_NAME, LATEST_VERSION, REQUIRE_TAG } =
-    process.env;
+  const {
+    VERSION,
+    REPOSITORY,
+    GITHUB_REPOSITORY,
+    REF_TYPE,
+    REF_NAME,
+    LATEST_VERSION,
+    REQUIRE_TAG,
+  } = process.env;
+  assertRepositoryMatches(JSON.parse(REPOSITORY || "null"), GITHUB_REPOSITORY);
   if (REF_TYPE === "tag") {
     assertTagMatchesVersion(REF_NAME, VERSION);
   } else if (REQUIRE_TAG === "true") {
