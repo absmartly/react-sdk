@@ -53,12 +53,33 @@ describe("parseVersion", () => {
     });
   });
 
-  it.each(["", "v1.4.2", "1.4", "1.4.2.0", "01.4.2", "1.4.2-", undefined])(
-    "rejects %s",
-    (version) => {
-      expect(() => parseVersion(version)).toThrow(/Invalid semver/);
-    },
-  );
+  it("accepts numeric and alphanumeric prerelease identifiers", () => {
+    for (const version of [
+      "1.4.3-beta.0",
+      "1.4.3-beta.10",
+      "1.4.3-0",
+      "1.4.3-01a",
+      "1.4.3-rc-1",
+      "1.4.3-beta.1+001",
+    ]) {
+      expect(() => parseVersion(version)).not.toThrow();
+    }
+  });
+
+  it.each([
+    "",
+    "v1.4.2",
+    "1.4",
+    "1.4.2.0",
+    "01.4.2",
+    "1.4.2-",
+    "1.4.3-beta.01",
+    "1.4.3-00",
+    "1.4.3-beta..1",
+    undefined,
+  ])("rejects %s", (version) => {
+    expect(() => parseVersion(version)).toThrow(/Invalid semver/);
+  });
 });
 
 describe("assertTagMatchesVersion", () => {

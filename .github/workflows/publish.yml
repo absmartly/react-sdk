@@ -23,10 +23,12 @@ on:
         default: true
 
 # One queue for all refs: concurrent releases would each read the same npm
-# "latest" and could both publish as latest.
+# "latest" and could both publish as latest. queue: max keeps every pending run
+# (the default keeps one and cancels the rest).
 concurrency:
   group: publish
   cancel-in-progress: false
+  queue: max
 
 jobs:
   publish:
@@ -35,6 +37,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      # setup-node writes ${NODE_AUTH_TOKEN} into .npmrc, and Yarn 1 fails to
+      # start if it is unset. The publish step overrides it.
+      NODE_AUTH_TOKEN: ""
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

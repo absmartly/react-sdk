@@ -1,10 +1,13 @@
-// Release checks for .github/workflows/publish.yml.
-// Pure helpers are exported for tests; the CLI prints the npm dist-tag to use.
-
 import { pathToFileURL } from "node:url";
 
-const SEMVER =
-  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+// Numeric prerelease identifiers must not have leading zeroes ("beta.01"):
+// npm would normalise the version and no longer match the tag.
+const PRERELEASE_ID = "(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)";
+const SEMVER = new RegExp(
+  "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)" +
+    `(?:-(${PRERELEASE_ID}(?:\\.${PRERELEASE_ID})*))?` +
+    "(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+);
 
 export function parseVersion(version) {
   const match = SEMVER.exec(version ?? "");
