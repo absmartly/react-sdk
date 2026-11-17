@@ -22,8 +22,10 @@ on:
         type: boolean
         default: true
 
+# One queue for all refs: concurrent releases would each read the same npm
+# "latest" and could both publish as latest.
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish
   cancel-in-progress: false
 
 jobs:

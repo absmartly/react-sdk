@@ -23,6 +23,12 @@ describe("publish workflow", () => {
     expect(WORKFLOW).not.toMatch(/^\s+branches:/m);
   });
 
+  it("runs one release at a time across all refs", () => {
+    expect(WORKFLOW).toMatch(
+      /^concurrency:\n {2}group: publish\n {2}cancel-in-progress: false\n/m,
+    );
+  });
+
   it("uses Node 22 or newer", () => {
     const version = /node-version: "(\d+)"/.exec(step("Setup Node.js"));
     expect(Number(version?.[1])).toBeGreaterThanOrEqual(22);
@@ -59,6 +65,11 @@ describe("publish workflow", () => {
 
   it("compares against npm latest and detects published versions", () => {
     const release = step("Check tag and resolve npm dist-tag");
+    expect(release).toContain("REF_NAME: ${{ github.ref_name }}");
+    expect(release).toContain(
+      `REPOSITORY=$(node -p "JSON.stringify(require('./package.json').repository ?? null)")`,
+    );
+    expect(release).toContain("export VERSION REPOSITORY LATEST_VERSION\n");
     expect(release).toContain(
       "LATEST_VERSION=$(npm view @absmartly/react-sdk dist-tags.latest)",
     );
