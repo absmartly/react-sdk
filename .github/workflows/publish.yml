@@ -104,7 +104,13 @@ jobs:
           echo "already_published=${ALREADY_PUBLISHED}" >> "$GITHUB_OUTPUT"
 
       - name: Preview package contents
-        run: npm pack --dry-run --ignore-scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in lib/cjs/index.js lib/esm/index.js lib/esm/index.d.ts; do
+            test -f "$f" || { echo "::error::Build output $f is missing" >&2; exit 1; }
+          done
+          npm pack --dry-run --ignore-scripts
 
       # --ignore-scripts: the build above is the tested artifact; the prepack
       # script would otherwise run `yarn upgrade` and rebuild with other deps.
