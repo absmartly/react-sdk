@@ -54,7 +54,6 @@ describe("publish workflow release step", () => {
       resolve(__dirname, "../.github/scripts/publish-checks.mjs"),
       join(dir, ".github/scripts/publish-checks.mjs"),
     );
-    // Fake npm answering the two registry queries of the release step.
     writeFileSync(
       join(dir, "bin/npm"),
       [
