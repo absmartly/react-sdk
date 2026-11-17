@@ -16,6 +16,22 @@ function step(name: string) {
 }
 
 describe("publish workflow", () => {
+  it("runs on v* tag pushes and manual runs that default to a dry run", () => {
+    expect(WORKFLOW).toMatch(
+      /^on:\n {2}push:\n {4}tags:\n {6}- "v\*"\n {2}workflow_dispatch:\n {4}inputs:\n {6}dry_run:\n(?: {8}.*\n)*? {8}type: boolean\n {8}default: true\n/m,
+    );
+    expect(WORKFLOW).not.toMatch(/^\s+branches:/m);
+  });
+
+  it("uses Node 22 or newer", () => {
+    const version = /node-version: "(\d+)"/.exec(step("Setup Node.js"));
+    expect(Number(version?.[1])).toBeGreaterThanOrEqual(22);
+  });
+
+  it("does not leave the GitHub token in the checkout", () => {
+    expect(step("Checkout code")).toContain("persist-credentials: false");
+  });
+
   it("tests and builds before checking, previewing and publishing", () => {
     const order = [
       "Update npm",
@@ -66,13 +82,7 @@ describe("publish workflow", () => {
 
   it("fails before publishing when the build output is missing", () => {
     const preview = step("Preview package contents");
-    for (const file of [
-      "lib/cjs/index.js",
-      "lib/esm/index.js",
-      "lib/esm/index.d.ts",
-    ]) {
-      expect(preview).toContain(file);
-    }
+    expect(preview).toContain("[p.main, p.module, p.types]");
     expect(preview).toContain('test -f "$f" || {');
   });
 
