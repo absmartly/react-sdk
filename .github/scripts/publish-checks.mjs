@@ -31,9 +31,9 @@ function compareRelease(a, b) {
   return a.major - b.major || a.minor - b.minor || a.patch - b.patch;
 }
 
-// npm rejects dist-tags that are valid semver ranges ("v1", "1.4", "v1.4.x"),
-// so tags are always suffixed, e.g. "v1-latest".
-const SEMVER_RANGE_LIKE = /^[v=]?\d+(?:\.(?:\d+|[xX*]))*$/;
+// npm rejects dist-tags that are valid semver ranges ("v1", "1.4", "v1.4.x",
+// "x", "*"), so tags are always suffixed, e.g. "v1-latest".
+const SEMVER_RANGE_LIKE = /^[v=]?(?:\d+|[xX*])(?:\.(?:\d+|[xX*]))*$/;
 
 export function assertValidDistTag(tag) {
   if (SEMVER_RANGE_LIKE.test(tag)) {

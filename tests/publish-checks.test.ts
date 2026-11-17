@@ -79,9 +79,12 @@ describe("assertTagMatchesVersion", () => {
 });
 
 describe("assertValidDistTag", () => {
-  it.each(["v1", "v1.4", "1", "1.4.2", "v1.x", "=1"])("rejects %s", (tag) => {
-    expect(() => assertValidDistTag(tag)).toThrow(/semver range/);
-  });
+  it.each(["v1", "v1.4", "1", "1.4.2", "v1.x", "=1", "x", "X", "*", "x.x"])(
+    "rejects %s",
+    (tag) => {
+      expect(() => assertValidDistTag(tag)).toThrow(/semver range/);
+    },
+  );
 
   it.each(["latest", "beta", "v1-latest", "v1.4-latest", "v1-beta", "next"])(
     "accepts %s",
@@ -124,6 +127,10 @@ describe("resolveDistTag", () => {
     ]) {
       expect(resolveDistTag(version, latest)).not.toMatch(/^v?\d+(\.\d+)*$/);
     }
+  });
+
+  it("rejects a prerelease identifier npm would read as a range", () => {
+    expect(() => resolveDistTag("1.4.3-x.1", "1.4.2")).toThrow(/semver range/);
   });
 
   it("rejects an invalid latest version", () => {
