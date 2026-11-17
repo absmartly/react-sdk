@@ -42,7 +42,7 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-          cache: "yarn"
+          # No dependency cache: this job can mint an OIDC publish token.
 
       # Trusted Publishing requires npm >= 11.5.1.
       - name: Update npm
