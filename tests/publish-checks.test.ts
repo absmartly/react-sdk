@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import {
   assertTagMatchesVersion,
+  assertValidDistTag,
   parseVersion,
   resolveDistTag,
 } from "../.github/scripts/publish-checks.mjs";
@@ -58,6 +59,12 @@ describe("assertTagMatchesVersion", () => {
     ).not.toThrow();
   });
 
+  it("rejects an invalid version even when the tag matches it", () => {
+    expect(() => assertTagMatchesVersion("vfoo", "foo")).toThrow(
+      /Invalid semver/,
+    );
+  });
+
   it.each([
     ["v1.4.3", "1.4.2"],
     ["1.4.2", "1.4.2"],
@@ -71,6 +78,19 @@ describe("assertTagMatchesVersion", () => {
   });
 });
 
+describe("assertValidDistTag", () => {
+  it.each(["v1", "v1.4", "1", "1.4.2", "v1.x", "=1"])("rejects %s", (tag) => {
+    expect(() => assertValidDistTag(tag)).toThrow(/semver range/);
+  });
+
+  it.each(["latest", "beta", "v1-latest", "v1.4-latest", "v1-beta", "next"])(
+    "accepts %s",
+    (tag) => {
+      expect(() => assertValidDistTag(tag)).not.toThrow();
+    },
+  );
+});
+
 describe("resolveDistTag", () => {
   it.each([
     // stable, becomes latest
@@ -79,13 +99,13 @@ describe("resolveDistTag", () => {
     ["2.0.0", "1.4.2", ""],
     ["1.4.2", "1.4.2", ""],
     // older major never becomes latest
-    ["1.4.3", "2.0.0", "v1"],
-    ["1.99.99", "2.0.0", "v1"],
-    ["1.4.3", "10.0.0", "v1"],
-    ["9.0.0", "10.0.0", "v9"],
+    ["1.4.3", "2.0.0", "v1-latest"],
+    ["1.99.99", "2.0.0", "v1-latest"],
+    ["1.4.3", "10.0.0", "v1-latest"],
+    ["9.0.0", "10.0.0", "v9-latest"],
     // older release on latest's major never becomes latest
-    ["1.3.9", "1.4.2", "v1.3"],
-    ["1.4.1", "1.4.2", "v1.4"],
+    ["1.3.9", "1.4.2", "v1.3-latest"],
+    ["1.4.1", "1.4.2", "v1.4-latest"],
     // prereleases
     ["1.4.3-beta.1", "1.4.2", "beta"],
     ["2.0.0-alpha.0", "1.4.2", "alpha"],
@@ -94,6 +114,16 @@ describe("resolveDistTag", () => {
     ["1.4.3-0", "1.4.2", "next"],
   ])("version %s with latest %s -> %j", (version, latest, expected) => {
     expect(resolveDistTag(version, latest)).toBe(expected);
+  });
+
+  it("never returns a dist-tag npm rejects as a semver range", () => {
+    for (const [version, latest] of [
+      ["1.4.3", "2.0.0"],
+      ["1.3.9", "1.4.2"],
+      ["1.5.0-beta.0", "2.0.0"],
+    ]) {
+      expect(resolveDistTag(version, latest)).not.toMatch(/^v?\d+(\.\d+)*$/);
+    }
   });
 
   it("rejects an invalid latest version", () => {
@@ -113,7 +143,7 @@ describe("publish-checks CLI", () => {
     expect(result).toMatchObject({ code: 0, stdout: "" });
   });
 
-  it("prints v1 for a 1.x patch when latest is 2.x", () => {
+  it("prints v1-latest for a 1.x patch when latest is 2.x", () => {
     const result = runScript({
       VERSION: "1.4.3",
       LATEST_VERSION: "2.0.0",
@@ -121,7 +151,7 @@ describe("publish-checks CLI", () => {
       REF_NAME: "v1.4.3",
       REQUIRE_TAG: "true",
     });
-    expect(result).toMatchObject({ code: 0, stdout: "v1" });
+    expect(result).toMatchObject({ code: 0, stdout: "v1-latest" });
   });
 
   it("fails when the tag does not match package.json", () => {
@@ -134,6 +164,18 @@ describe("publish-checks CLI", () => {
     });
     expect(result.code).toBe(1);
     expect(result.stderr).toMatch(/::error::Tag "v1.4.3" does not match/);
+  });
+
+  it("fails a dry run on a tag that does not match package.json", () => {
+    const result = runScript({
+      VERSION: "1.4.2",
+      LATEST_VERSION: "1.4.2",
+      REF_TYPE: "tag",
+      REF_NAME: "v1.4.3",
+      REQUIRE_TAG: "false",
+    });
+    expect(result.code).toBe(1);
+    expect(result.stderr).toMatch(/does not match/);
   });
 
   it("fails a real publish from a branch ref", () => {

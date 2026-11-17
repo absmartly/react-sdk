@@ -61,9 +61,10 @@ jobs:
           echo "npm $NPM_VERSION"
 
       # The repository is locked with yarn.lock (there is no package-lock.json),
-      # so `npm ci` cannot be used; this is the yarn equivalent.
+      # so `npm ci` cannot be used; this is the yarn equivalent. Dependency
+      # install scripts are skipped because this job can mint an OIDC token.
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --ignore-scripts
 
       - name: Run tests
         run: yarn test --run
