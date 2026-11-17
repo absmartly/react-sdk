@@ -25,6 +25,13 @@ function step(name: string) {
   return WORKFLOW.slice(start, next === -1 ? undefined : next);
 }
 
+// Returns the command of a step's single-line `run:`.
+function runLine(name: string) {
+  const match = /\n {8}run: (?!\|)(.*)\n?/.exec(step(name));
+  expect(match, `single-line run of "${name}"`).not.toBeNull();
+  return match![1];
+}
+
 // Returns the shell script of a step's `run: |` block.
 function runScript(name: string) {
   const lines = step(name).split("\n");
@@ -171,6 +178,97 @@ describe("publish workflow release step", () => {
   });
 });
 
+describe("publish workflow preview and publish steps", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "publish-steps-"));
+    mkdirSync(join(dir, "bin"));
+    writeFileSync(
+      join(dir, "bin/npm"),
+      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$NPM_CALLS"\n',
+    );
+    chmodSync(join(dir, "bin/npm"), 0o755);
+    writeFileSync(
+      join(dir, "package.json"),
+      JSON.stringify({
+        main: "./lib/cjs/index.js",
+        module: "./lib/esm/index.js",
+        types: "./lib/esm/index.d.ts",
+      }),
+    );
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function run(name: string, env: Record<string, string> = {}) {
+    writeFileSync(join(dir, "calls"), "");
+    const result = spawnSync("bash", ["-c", runScript(name)], {
+      cwd: dir,
+      encoding: "utf8",
+      env: {
+        PATH: `${join(dir, "bin")}:${process.env.PATH ?? ""}`,
+        NPM_CALLS: join(dir, "calls"),
+        ...env,
+      },
+    });
+    const calls = readFileSync(join(dir, "calls"), "utf8")
+      .split("\n")
+      .filter(Boolean);
+    return { code: result.status, stderr: result.stderr, calls };
+  }
+
+  function build(files: string[]) {
+    for (const file of files) {
+      mkdirSync(join(dir, file, ".."), { recursive: true });
+      writeFileSync(join(dir, file), "");
+    }
+  }
+
+  it("previews the package when every entry point is built", () => {
+    build(["lib/cjs/index.js", "lib/esm/index.js", "lib/esm/index.d.ts"]);
+    expect(run("Preview package contents")).toMatchObject({
+      code: 0,
+      calls: ["pack --dry-run --ignore-scripts"],
+    });
+  });
+
+  it.each(["lib/cjs/index.js", "lib/esm/index.js", "lib/esm/index.d.ts"])(
+    "fails before npm pack when %s is missing",
+    (missing) => {
+      build(
+        ["lib/cjs/index.js", "lib/esm/index.js", "lib/esm/index.d.ts"].filter(
+          (file) => file !== missing,
+        ),
+      );
+      const result = run("Preview package contents");
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain(
+        `::error::Build output ./${missing} is missing`,
+      );
+      expect(result.calls).toEqual([]);
+    },
+  );
+
+  it("publishes as latest when there is no dist-tag", () => {
+    expect(run("Publish to npm", { DIST_TAG: "" })).toMatchObject({
+      code: 0,
+      calls: ["publish --provenance --access public --ignore-scripts"],
+    });
+  });
+
+  it("publishes with the resolved dist-tag", () => {
+    expect(run("Publish to npm", { DIST_TAG: "v1-latest" })).toMatchObject({
+      code: 0,
+      calls: [
+        "publish --provenance --access public --ignore-scripts --tag v1-latest",
+      ],
+    });
+  });
+});
+
 describe("publish workflow", () => {
   it("runs on v* tag pushes and manual runs that default to a dry run", () => {
     expect(WORKFLOW).toMatch(
@@ -216,8 +314,8 @@ describe("publish workflow", () => {
     ].map((name) => WORKFLOW.indexOf(`- name: ${name}\n`));
     expect(order.every((index) => index >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(step("Run tests")).toContain("run: yarn test --run");
-    expect(step("Build")).toContain("run: yarn build");
+    expect(runLine("Run tests")).toBe("yarn test --run");
+    expect(runLine("Build")).toBe("yarn build");
   });
 
   it("requires npm >= 11.5.1", () => {
@@ -228,6 +326,34 @@ describe("publish workflow", () => {
         "NPM_VERSION=$(npm --version)",
         'node .github/scripts/publish-checks.mjs npm-version "$NPM_VERSION"',
         'echo "npm $NPM_VERSION"',
+      ].join("\n"),
+    );
+  });
+
+  it("runs the release checks exactly as tested above", () => {
+    expect(runScript("Check tag and resolve npm dist-tag")).toBe(
+      [
+        "set -euo pipefail",
+        "VERSION=$(node -p \"require('./package.json').version\")",
+        "REPOSITORY=$(node -p \"JSON.stringify(require('./package.json').repository ?? null)\")",
+        "LATEST_VERSION=$(npm view @absmartly/react-sdk dist-tags.latest)",
+        'if [ -z "$LATEST_VERSION" ]; then',
+        '  echo "::error::Could not read the current latest version from npm" >&2',
+        "  exit 1",
+        "fi",
+        "# As in javascript-sdk: an already published version (e.g. a re-run)",
+        "# is a green no-op rather than a failing publish.",
+        "ALREADY_PUBLISHED=false",
+        "if npm view @absmartly/react-sdk versions --json | jq -e --arg v \"$VERSION\" 'index($v) != null' >/dev/null; then",
+        "  ALREADY_PUBLISHED=true",
+        '  echo "::notice::@absmartly/react-sdk@${VERSION} is already on npm; publish will be skipped"',
+        "fi",
+        "export VERSION REPOSITORY LATEST_VERSION",
+        "DIST_TAG=$(node .github/scripts/publish-checks.mjs)",
+        'echo "Publishing ${VERSION} (npm latest: ${LATEST_VERSION}, dist-tag: ${DIST_TAG:-latest})"',
+        'echo "version=${VERSION}" >> "$GITHUB_OUTPUT"',
+        'echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"',
+        'echo "already_published=${ALREADY_PUBLISHED}" >> "$GITHUB_OUTPUT"',
       ].join("\n"),
     );
   });
@@ -261,10 +387,15 @@ describe("publish workflow", () => {
   });
 
   it("fails before publishing when the build output is missing", () => {
-    const preview = step("Preview package contents");
-    expect(preview).toContain("[p.main, p.module, p.types]");
-    expect(preview).toContain(
-      'test -f "$f" || { echo "::error::Build output $f is missing" >&2; exit 1; }',
+    expect(runScript("Preview package contents")).toBe(
+      [
+        "set -euo pipefail",
+        "# package.json main, module and types must all exist after the build.",
+        `for f in $(node -p "const p = require('./package.json'); [p.main, p.module, p.types].join(' ')"); do`,
+        '  test -f "$f" || { echo "::error::Build output $f is missing" >&2; exit 1; }',
+        "done",
+        "npm pack --dry-run --ignore-scripts",
+      ].join("\n"),
     );
   });
 
@@ -285,15 +416,19 @@ describe("publish workflow", () => {
   });
 
   it("publishes with provenance and the resolved dist-tag", () => {
-    const publish = step("Publish to npm");
-    expect(publish).toContain(
-      "ARGS=(--provenance --access public --ignore-scripts)",
-    );
-    expect(publish).toContain(
+    expect(step("Publish to npm")).toContain(
       "DIST_TAG: ${{ steps.release.outputs.dist_tag }}",
     );
-    expect(publish).toContain('ARGS+=(--tag "$DIST_TAG")');
-    expect(publish).toContain('npm publish "${ARGS[@]}"');
+    expect(runScript("Publish to npm")).toBe(
+      [
+        "set -euo pipefail",
+        "ARGS=(--provenance --access public --ignore-scripts)",
+        'if [ -n "$DIST_TAG" ]; then',
+        '  ARGS+=(--tag "$DIST_TAG")',
+        "fi",
+        'npm publish "${ARGS[@]}"',
+      ].join("\n"),
+    );
   });
 
   it("never moves dist-tags", () => {
@@ -309,7 +444,7 @@ describe("publish workflow", () => {
 
   it("does not restore a dependency cache or run install scripts", () => {
     expect(WORKFLOW).not.toMatch(/^\s*cache:/m);
-    expect(step("Install dependencies")).toContain(
+    expect(runLine("Install dependencies")).toBe(
       "yarn install --frozen-lockfile --ignore-scripts",
     );
   });
