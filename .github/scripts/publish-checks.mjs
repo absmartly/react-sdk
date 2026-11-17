@@ -20,6 +20,17 @@ export function parseVersion(version) {
   };
 }
 
+// Trusted Publishing requires npm >= 11.5.1.
+export function assertNpmVersion(npmVersion) {
+  const npm = parseVersion(npmVersion);
+  const order = compareRelease(npm, { major: 11, minor: 5, patch: 1 });
+  if (order < 0 || (order === 0 && npm.prerelease.length > 0)) {
+    throw new Error(
+      `npm ${npmVersion} is older than 11.5.1, required for Trusted Publishing`,
+    );
+  }
+}
+
 // The pushed tag must be exactly "v" + package.json version.
 export function assertTagMatchesVersion(tag, version) {
   parseVersion(version);
@@ -89,6 +100,10 @@ function distTagFor(version, latestVersion) {
 }
 
 function main() {
+  if (process.argv[2] === "npm-version") {
+    assertNpmVersion(process.argv[3]);
+    return;
+  }
   const {
     VERSION,
     REPOSITORY,

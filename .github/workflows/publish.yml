@@ -28,6 +28,7 @@ on:
 concurrency:
   group: publish
   cancel-in-progress: false
+  # Valid per GitHub docs; actionlint does not know it yet (rhysd/actionlint#657).
   queue: max
 
 jobs:
@@ -61,13 +62,7 @@ jobs:
           set -euo pipefail
           npm install -g npm@latest
           NPM_VERSION=$(npm --version)
-          node -e '
-            const [a, b, c] = process.argv[1].split(".").map(Number);
-            if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) {
-              console.error(`::error::npm ${process.argv[1]} is older than 11.5.1, required for Trusted Publishing`);
-              process.exit(1);
-            }
-          ' "$NPM_VERSION"
+          node .github/scripts/publish-checks.mjs npm-version "$NPM_VERSION"
           echo "npm $NPM_VERSION"
 
       # The repository is locked with yarn.lock (there is no package-lock.json),

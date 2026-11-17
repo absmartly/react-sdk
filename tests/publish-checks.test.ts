@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  assertNpmVersion,
   assertRepositoryMatches,
   assertTagMatchesVersion,
   assertValidDistTag,
@@ -107,6 +108,24 @@ describe("assertTagMatchesVersion", () => {
       /does not match/,
     );
   });
+});
+
+describe("assertNpmVersion", () => {
+  it.each(["11.5.1", "11.5.2", "11.6.0", "11.6.0-pre.0", "12.0.0", "12.2.2"])(
+    "accepts %s",
+    (version) => {
+      expect(() => assertNpmVersion(version)).not.toThrow();
+    },
+  );
+
+  it.each(["11.5.0", "11.4.9", "10.9.9", "9.2.0", "11.5.1-pre.0", "", "11.5"])(
+    "rejects %s",
+    (version) => {
+      expect(() => assertNpmVersion(version)).toThrow(
+        /older than 11\.5\.1|Invalid semver/,
+      );
+    },
+  );
 });
 
 describe("assertRepositoryMatches", () => {
@@ -275,6 +294,18 @@ describe("publish-checks CLI", () => {
       REQUIRE_TAG: "false",
     });
     expect(result).toMatchObject({ code: 0, stdout: "" });
+  });
+
+  it("checks the npm version", () => {
+    const ok = spawnSync(process.execPath, [SCRIPT, "npm-version", "11.5.1"], {
+      encoding: "utf8",
+    });
+    expect(ok.status).toBe(0);
+    const old = spawnSync(process.execPath, [SCRIPT, "npm-version", "11.5.0"], {
+      encoding: "utf8",
+    });
+    expect(old.status).toBe(1);
+    expect(old.stderr).toMatch(/::error::npm 11\.5\.0 is older than 11\.5\.1/);
   });
 
   it("fails when package.json has no repository", () => {

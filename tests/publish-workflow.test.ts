@@ -32,7 +32,12 @@ function runScript(name: string) {
   expect(start, `run block of "${name}"`).toBeGreaterThanOrEqual(0);
   const body = lines.slice(start + 1);
   const indent = body[0].length - body[0].trimStart().length;
+  const end = body.findIndex(
+    (line) =>
+      line.trim() !== "" && line.length - line.trimStart().length < indent,
+  );
   return body
+    .slice(0, end === -1 ? undefined : end)
     .filter((line) => line.trim() !== "")
     .map((line) => line.slice(indent))
     .join("\n");
@@ -177,7 +182,7 @@ describe("publish workflow", () => {
 
   it("runs one release at a time across all refs", () => {
     expect(WORKFLOW).toMatch(
-      /^concurrency:\n {2}group: publish\n {2}cancel-in-progress: false\n {2}queue: max\n/m,
+      /^concurrency:\n {2}group: publish\n {2}cancel-in-progress: false\n(?: {2}#.*\n)? {2}queue: max\n/m,
     );
   });
 
@@ -217,13 +222,15 @@ describe("publish workflow", () => {
   });
 
   it("requires npm >= 11.5.1", () => {
-    const update = step("Update npm");
-    expect(update).toContain("npm install -g npm@latest");
-    expect(update).toMatch(
-      /node -e '\n\s*const \[a, b, c\] = process\.argv\[1\]\.split\("\."\)\.map\(Number\);\n\s*if \(a < 11 \|\| \(a === 11 && \(b < 5 \|\| \(b === 5 && c < 1\)\)\)\) \{\n/,
+    expect(runScript("Update npm")).toBe(
+      [
+        "set -euo pipefail",
+        "npm install -g npm@latest",
+        "NPM_VERSION=$(npm --version)",
+        'node .github/scripts/publish-checks.mjs npm-version "$NPM_VERSION"',
+        'echo "npm $NPM_VERSION"',
+      ].join("\n"),
     );
-    expect(update).toContain(`' "$NPM_VERSION"`);
-    expect(update).toMatch(/older than 11\.5\.1.*\n\s*process\.exit\(1\);/);
   });
 
   it("compares against npm latest and detects published versions", () => {
