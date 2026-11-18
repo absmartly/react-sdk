@@ -67,7 +67,7 @@ describe("publish workflow release step", () => {
         "#!/bin/sh",
         'case "$*" in',
         '  "view @absmartly/react-sdk dist-tags.latest") echo "$FAKE_LATEST" ;;',
-        '  "view @absmartly/react-sdk versions --json") echo "$FAKE_VERSIONS" ;;',
+        '  "view @absmartly/react-sdk versions --json") echo "$FAKE_VERSIONS"; exit "${FAKE_VERSIONS_EXIT:-0}" ;;',
         '  *) echo "unexpected npm $*" >&2; exit 2 ;;',
         "esac",
       ].join("\n"),
@@ -144,6 +144,34 @@ describe("publish workflow release step", () => {
       outputs: { already_published: "true" },
     });
   });
+
+  it("skips an already published version of a single-version package", () => {
+    expect(
+      release("1.4.2", { ...tagPush("v1.4.2"), FAKE_VERSIONS: '"1.4.2"' }),
+    ).toMatchObject({ code: 0, outputs: { already_published: "true" } });
+  });
+
+  it("fails when npm cannot list the published versions", () => {
+    const result = release("1.4.3", {
+      ...tagPush("v1.4.3"),
+      FAKE_VERSIONS: "",
+      FAKE_VERSIONS_EXIT: "72",
+    });
+    expect(result.code).not.toBe(0);
+    expect(result.outputs).toEqual({});
+  });
+
+  it.each(["", "not json", "{}", "null"])(
+    "fails when npm lists the published versions as %j",
+    (versions) => {
+      const result = release("1.4.3", {
+        ...tagPush("v1.4.3"),
+        FAKE_VERSIONS: versions,
+      });
+      expect(result.code).not.toBe(0);
+      expect(result.outputs).toEqual({});
+    },
+  );
 
   it("fails when the tag does not match package.json", () => {
     const result = release("1.4.3", tagPush("v1.4.4"));
@@ -343,9 +371,12 @@ describe("publish workflow", () => {
         "fi",
         "# As in javascript-sdk: an already published version (e.g. a re-run)",
         "# is a green no-op rather than a failing publish.",
-        "ALREADY_PUBLISHED=false",
-        "if npm view @absmartly/react-sdk versions --json | jq -e --arg v \"$VERSION\" 'index($v) != null' >/dev/null; then",
-        "  ALREADY_PUBLISHED=true",
+        '# A failed lookup must fail here, not read as "not published". npm',
+        "# prints a bare string instead of an array when only one version exists.",
+        "PUBLISHED_VERSIONS=$(npm view @absmartly/react-sdk versions --json)",
+        'ALREADY_PUBLISHED=$(jq -nr --arg v "$VERSION" --argjson versions "$PUBLISHED_VERSIONS" \\',
+        `  '$versions | if type == "string" then [.] elif type == "array" then . else error("unexpected npm versions output") end | index($v) != null')`,
+        'if [ "$ALREADY_PUBLISHED" = true ]; then',
         '  echo "::notice::@absmartly/react-sdk@${VERSION} is already on npm; publish will be skipped"',
         "fi",
         "export VERSION REPOSITORY LATEST_VERSION",
@@ -358,31 +389,9 @@ describe("publish workflow", () => {
     );
   });
 
-  it("compares against npm latest and detects published versions", () => {
-    const release = step("Check tag and resolve npm dist-tag");
-    expect(release).toContain("REF_NAME: ${{ github.ref_name }}");
-    expect(release).toContain(
-      `REPOSITORY=$(node -p "JSON.stringify(require('./package.json').repository ?? null)")`,
-    );
-    expect(release).toContain("export VERSION REPOSITORY LATEST_VERSION\n");
-    expect(release).toContain(
-      "LATEST_VERSION=$(npm view @absmartly/react-sdk dist-tags.latest)",
-    );
-    expect(release).toMatch(
-      /if \[ -z "\$LATEST_VERSION" \]; then\n.*\n\s*exit 1/,
-    );
-    expect(release).toContain(
-      `npm view @absmartly/react-sdk versions --json | jq -e --arg v "$VERSION" 'index($v) != null'`,
-    );
-    expect(release).toMatch(/then\n\s*ALREADY_PUBLISHED=true\n/);
-    expect(release).toContain(
-      'echo "already_published=${ALREADY_PUBLISHED}" >> "$GITHUB_OUTPUT"',
-    );
-    expect(release).toContain(
-      'echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"',
-    );
-    expect(release).toContain(
-      "DIST_TAG=$(node .github/scripts/publish-checks.mjs)",
+  it("passes the ref name to the release checks", () => {
+    expect(step("Check tag and resolve npm dist-tag")).toContain(
+      "REF_NAME: ${{ github.ref_name }}",
     );
   });
 
