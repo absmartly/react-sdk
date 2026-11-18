@@ -89,14 +89,10 @@ function compareRelease(a, b) {
   return a.major - b.major || a.minor - b.minor || a.patch - b.patch;
 }
 
-// npm rejects dist-tags that are valid semver ranges ("v1", "1.4", "v1.4.x",
-// "x", "*"), so tags are always suffixed, e.g. "v1-latest".
-const SEMVER_RANGE_LIKE = /^[v=]?(?:\d+|[xX*])(?:\.(?:\d+|[xX*]))*$/;
-
-export function assertValidDistTag(tag) {
-  if (SEMVER_RANGE_LIKE.test(tag)) {
-    throw new Error(`npm dist-tag "${tag}" must not be a semver range`);
-  }
+// npm rejects dist-tags that are valid semver ranges ("v1", "vv1", "1.4",
+// "v1.4.x", "x", "*"), so tags are always suffixed, e.g. "v1-latest".
+export function isSemverRange(tag) {
+  return /^[v=]*(?:\d+|[xX*])(?:\.(?:\d+|[xX*]))*$/.test(tag);
 }
 
 // Returns the dist-tag to pass to `npm publish --tag`, or "" to use npm's default ("latest").
@@ -107,12 +103,6 @@ export function assertValidDistTag(tag) {
 //   or "v<major>.<minor>-" when below latest on its major. Only latest is compared: publishing
 //   1.5.0-beta.0 while "beta" points at a 2.x prerelease still moves "beta" back.
 export function resolveDistTag(version, latestVersion) {
-  const tag = distTagFor(version, latestVersion);
-  if (tag) assertValidDistTag(tag);
-  return tag;
-}
-
-function distTagFor(version, latestVersion) {
   const current = parseVersion(version);
   const latest = parseVersion(latestVersion);
   const olderMajor = current.major < latest.major;
@@ -128,7 +118,7 @@ function distTagFor(version, latestVersion) {
       return `v${current.major}.${current.minor}-${id}`;
     }
     // Only the unprefixed tag can be read as a range ("1.5.0-x" -> "x").
-    return SEMVER_RANGE_LIKE.test(id) ? "next" : id;
+    return isSemverRange(id) ? "next" : id;
   }
   if (olderMajor) return `v${current.major}-latest`;
   if (compareRelease(current, latest) < 0) {

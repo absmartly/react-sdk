@@ -7,8 +7,8 @@ import {
   assertPublishableVersion,
   assertRepositoryMatches,
   assertTagMatchesVersion,
-  assertValidDistTag,
   isPublished,
+  isSemverRange,
   parseVersion,
   resolveDistTag,
 } from "../.github/scripts/publish-checks.mjs";
@@ -217,18 +217,29 @@ describe("assertRepositoryMatches", () => {
   });
 });
 
-describe("assertValidDistTag", () => {
-  it.each(["v1", "v1.4", "1", "1.4.2", "v1.x", "=1", "x", "X", "*", "x.x"])(
-    "rejects %s",
-    (tag) => {
-      expect(() => assertValidDistTag(tag)).toThrow(/semver range/);
-    },
-  );
+describe("isSemverRange", () => {
+  it.each([
+    "v1",
+    "vv1",
+    "vvx",
+    "v=1",
+    "v1.4",
+    "1",
+    "1.4.2",
+    "v1.x",
+    "=1",
+    "x",
+    "X",
+    "*",
+    "x.x",
+  ])("is true for %s", (tag) => {
+    expect(isSemverRange(tag)).toBe(true);
+  });
 
   it.each(["latest", "beta", "v1-latest", "v1.4-latest", "v1-beta", "next"])(
-    "accepts %s",
+    "is false for %s",
     (tag) => {
-      expect(() => assertValidDistTag(tag)).not.toThrow();
+      expect(isSemverRange(tag)).toBe(false);
     },
   );
 });
@@ -270,8 +281,10 @@ describe("resolveDistTag", () => {
       ["1.3.9", "1.4.2"],
       ["1.5.0-beta.0", "2.0.0"],
       ["1.3.9-beta.0", "1.4.2"],
+      ["1.5.0-vv1", "1.4.2"],
+      ["1.5.0-x", "1.4.2"],
     ]) {
-      expect(resolveDistTag(version, latest)).not.toMatch(/^v?\d+(\.\d+)*$/);
+      expect(isSemverRange(resolveDistTag(version, latest))).toBe(false);
     }
   });
 
@@ -279,6 +292,7 @@ describe("resolveDistTag", () => {
     ["1.4.3-x.1", "1.4.2", "next"],
     ["1.5.0-X", "1.4.2", "next"],
     ["1.5.0-v1", "1.4.2", "next"],
+    ["1.5.0-vv1", "1.4.2", "next"],
     ["1.3.9-x", "1.4.2", "v1.3-x"],
     ["1.5.0-x", "2.0.0", "v1-x"],
   ])(
