@@ -42,13 +42,13 @@ Releases are published to npm by the [publish workflow](.github/workflows/publis
 
 1. Bump `version` in `package.json` on `main`.
 2. Optionally, run the "Publish" workflow manually from `main` with `dry_run` checked. It runs the tests and the build, then previews the package without publishing.
-3. Push the tag `v<version>`, e.g. `git tag v1.4.3 && git push origin v1.4.3`. The tag must match `package.json` exactly, and the version must not contain build metadata (`+...`).
+3. Tag the commit that contains the version bump and push the tag `v<version>`: `git fetch origin && git tag v1.4.3 origin/main && git push origin v1.4.3` (check first that `origin/main` has the bumped `package.json`). The tag must match `package.json` exactly, and the version must not contain build metadata (`+...`).
 
 The workflow chooses the npm dist-tag:
 
 - A new highest release becomes `latest`.
 - An older major gets `v<major>-latest`, and an older minor on latest's major gets `v<major>.<minor>-latest`.
-- A prerelease gets its first identifier (e.g. `beta`), with the same `v<major>-` / `v<major>.<minor>-` prefix when it is below latest.
+- A prerelease gets its first identifier (e.g. `beta`). The identifier becomes `next` when it does not start with a letter (`1.5.0-0`), is `latest`, or would be read as a semver range (`x`, `v1`). The same `v<major>-` / `v<major>.<minor>-` prefix is added when the prerelease is below latest, e.g. `v1.3-beta`.
 
 A version that is already on npm is skipped, so re-running a release is safe.
 

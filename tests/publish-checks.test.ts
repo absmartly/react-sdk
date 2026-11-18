@@ -146,14 +146,20 @@ describe("isPublished", () => {
     expect(isPublished('"1.4.2"', "1.4.3")).toBe(false);
   });
 
-  it.each(["", "not json", "{}", "null", "1", undefined])(
-    "rejects %j",
-    (output) => {
-      expect(() => isPublished(output, "1.4.3")).toThrow(
-        /Unexpected npm versions output/,
-      );
-    },
-  );
+  it.each([
+    "",
+    "not json",
+    "{}",
+    "null",
+    "1",
+    "[null]",
+    '["1.4.2",1]',
+    undefined,
+  ])("rejects %j", (output) => {
+    expect(() => isPublished(output, "1.4.3")).toThrow(
+      /Unexpected npm versions output/,
+    );
+  });
 });
 
 describe("assertNpmVersion", () => {
@@ -250,7 +256,6 @@ describe("resolveDistTag", () => {
     ["1.4.3-0", "1.4.2", "next"],
     ["2.0.0-latest.1", "1.4.2", "next"],
     ["1.5.0-latest", "2.0.0", "v1-next"],
-    // prereleases below latest on its major keep shared channels moving forward
     ["1.3.9-beta.0", "1.4.2", "v1.3-beta"],
     ["1.4.2-beta.1", "1.4.2", "v1.4-beta"],
     ["1.4.1-0", "1.4.2", "v1.4-next"],
@@ -270,9 +275,18 @@ describe("resolveDistTag", () => {
     }
   });
 
-  it("rejects a prerelease identifier npm would read as a range", () => {
-    expect(() => resolveDistTag("1.4.3-x.1", "1.4.2")).toThrow(/semver range/);
-  });
+  it.each([
+    ["1.4.3-x.1", "1.4.2", "next"],
+    ["1.5.0-X", "1.4.2", "next"],
+    ["1.5.0-v1", "1.4.2", "next"],
+    ["1.3.9-x", "1.4.2", "v1.3-x"],
+    ["1.5.0-x", "2.0.0", "v1-x"],
+  ])(
+    "uses next for an unprefixed prerelease id npm would read as a range: %s with latest %s -> %j",
+    (version, latest, expected) => {
+      expect(resolveDistTag(version, latest)).toBe(expected);
+    },
+  );
 
   it("rejects an invalid latest version", () => {
     expect(() => resolveDistTag("1.4.3", "")).toThrow(/Invalid semver/);

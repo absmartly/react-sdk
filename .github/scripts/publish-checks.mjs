@@ -76,7 +76,10 @@ export function isPublished(versionsJson, version) {
     versions = undefined;
   }
   if (typeof versions === "string") versions = [versions];
-  if (!Array.isArray(versions)) {
+  if (
+    !Array.isArray(versions) ||
+    !versions.every((entry) => typeof entry === "string")
+  ) {
     throw new Error(`Unexpected npm versions output: "${versionsJson}"`);
   }
   return versions.includes(version);
@@ -120,12 +123,12 @@ function distTagFor(version, latestVersion) {
         ? first
         : "next";
     if (olderMajor) return `v${current.major}-${id}`;
-    // A prerelease of a stable latest's own release ("1.4.2-beta.1") is also below it.
     const order = compareRelease(current, latest);
     if (order < 0 || (order === 0 && latest.prerelease.length === 0)) {
       return `v${current.major}.${current.minor}-${id}`;
     }
-    return id;
+    // Only the unprefixed tag can be read as a range ("1.5.0-x" -> "x").
+    return SEMVER_RANGE_LIKE.test(id) ? "next" : id;
   }
   if (olderMajor) return `v${current.major}-latest`;
   if (compareRelease(current, latest) < 0) {
