@@ -311,6 +311,12 @@ describe("publish workflow", () => {
     );
   });
 
+  it("points npm at the public registry", () => {
+    expect(step("Setup Node.js")).toContain(
+      'registry-url: "https://registry.npmjs.org"',
+    );
+  });
+
   it("uses Node 22 or newer", () => {
     const version = /node-version: "(\d+)"/.exec(step("Setup Node.js"));
     expect(Number(version?.[1])).toBeGreaterThanOrEqual(22);
@@ -350,7 +356,7 @@ describe("publish workflow", () => {
     expect(runScript("Update npm")).toBe(
       [
         "set -euo pipefail",
-        "npm install -g npm@latest",
+        "npm install -g npm@11",
         "NPM_VERSION=$(npm --version)",
         'node .github/scripts/publish-checks.mjs npm-version "$NPM_VERSION"',
         'echo "npm $NPM_VERSION"',

@@ -60,7 +60,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm install -g npm@latest
+          npm install -g npm@11
           NPM_VERSION=$(npm --version)
           node .github/scripts/publish-checks.mjs npm-version "$NPM_VERSION"
           echo "npm $NPM_VERSION"

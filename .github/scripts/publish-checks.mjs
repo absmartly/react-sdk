@@ -31,9 +31,15 @@ export function assertNpmVersion(npmVersion) {
   }
 }
 
-// The pushed tag must be exactly "v" + package.json version.
+// The pushed tag must be exactly "v" + package.json version. npm drops build
+// metadata ("+build.1") on publish, so a re-run would not be seen as published.
 export function assertTagMatchesVersion(tag, version) {
   parseVersion(version);
+  if (version.includes("+")) {
+    throw new Error(
+      `package.json version "${version}" must not contain build metadata: npm drops it`,
+    );
+  }
   if (tag !== `v${version}`) {
     throw new Error(
       `Tag "${tag}" does not match package.json version "${version}" (expected "v${version}")`,

@@ -97,6 +97,12 @@ describe("assertTagMatchesVersion", () => {
     );
   });
 
+  it("rejects a version with build metadata", () => {
+    expect(() =>
+      assertTagMatchesVersion("v1.4.3+build.1", "1.4.3+build.1"),
+    ).toThrow(/build metadata/);
+  });
+
   it.each([
     ["v1.4.3", "1.4.2"],
     ["1.4.2", "1.4.2"],
