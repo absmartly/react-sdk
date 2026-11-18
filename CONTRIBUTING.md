@@ -41,7 +41,7 @@ For additional testing scripts or to get more insight on how these work, please 
 Releases are published to npm by the [publish workflow](.github/workflows/publish.yml) using npm Trusted Publishing, with provenance.
 
 1. Bump `version` in `package.json` on `main`.
-2. Optionally, run the "Publish to npm" workflow manually from `main` with `dry_run` checked. It runs the tests and the build, then previews the package without publishing.
+2. Optionally, run the "Publish" workflow manually from `main` with `dry_run` checked. It runs the tests and the build, then previews the package without publishing.
 3. Push the tag `v<version>`, e.g. `git tag v1.4.3 && git push origin v1.4.3`. The tag must match `package.json` exactly, and the version must not contain build metadata (`+...`).
 
 The workflow chooses the npm dist-tag:
