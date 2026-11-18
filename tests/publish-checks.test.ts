@@ -4,9 +4,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   assertNpmVersion,
+  assertPublishableVersion,
   assertRepositoryMatches,
   assertTagMatchesVersion,
   assertValidDistTag,
+  isPublished,
   parseVersion,
   resolveDistTag,
 } from "../.github/scripts/publish-checks.mjs";
@@ -114,6 +116,44 @@ describe("assertTagMatchesVersion", () => {
       /does not match/,
     );
   });
+});
+
+describe("assertPublishableVersion", () => {
+  it.each(["1.4.3", "2.0.0-beta.1"])("accepts %s", (version) => {
+    expect(() => assertPublishableVersion(version)).not.toThrow();
+  });
+
+  it("rejects build metadata", () => {
+    expect(() => assertPublishableVersion("1.4.3+build.1")).toThrow(
+      /build metadata/,
+    );
+  });
+
+  it("rejects an invalid version", () => {
+    expect(() => assertPublishableVersion("1.4")).toThrow(/Invalid semver/);
+  });
+});
+
+describe("isPublished", () => {
+  it("finds the version in npm's array output", () => {
+    expect(isPublished('["1.4.1","1.4.2"]', "1.4.2")).toBe(true);
+    expect(isPublished('["1.4.1","1.4.2"]', "1.4.3")).toBe(false);
+    expect(isPublished("[]", "1.4.3")).toBe(false);
+  });
+
+  it("accepts npm's bare string output for a single version", () => {
+    expect(isPublished('"1.4.2"', "1.4.2")).toBe(true);
+    expect(isPublished('"1.4.2"', "1.4.3")).toBe(false);
+  });
+
+  it.each(["", "not json", "{}", "null", "1", undefined])(
+    "rejects %j",
+    (output) => {
+      expect(() => isPublished(output, "1.4.3")).toThrow(
+        /Unexpected npm versions output/,
+      );
+    },
+  );
 });
 
 describe("assertNpmVersion", () => {
@@ -300,6 +340,36 @@ describe("publish-checks CLI", () => {
       REQUIRE_TAG: "false",
     });
     expect(result).toMatchObject({ code: 0, stdout: "" });
+  });
+
+  it("fails a branch dry run of a version with build metadata", () => {
+    const result = runScript({
+      VERSION: "1.4.3+build.1",
+      LATEST_VERSION: "1.4.2",
+      REF_TYPE: "branch",
+      REF_NAME: "main",
+      REQUIRE_TAG: "false",
+    });
+    expect(result.code).toBe(1);
+    expect(result.stderr).toMatch(/::error::.*must not contain build metadata/);
+  });
+
+  it("checks whether the version is published", () => {
+    const published = (versions: string) =>
+      spawnSync(process.execPath, [SCRIPT, "published", "1.4.2", versions], {
+        encoding: "utf8",
+      });
+    expect(published('["1.4.1","1.4.2"]')).toMatchObject({
+      status: 0,
+      stdout: "true",
+    });
+    expect(published('["1.4.1"]')).toMatchObject({
+      status: 0,
+      stdout: "false",
+    });
+    const failed = published("{}");
+    expect(failed.status).toBe(1);
+    expect(failed.stderr).toMatch(/::error::Unexpected npm versions output/);
   });
 
   it("checks the npm version", () => {

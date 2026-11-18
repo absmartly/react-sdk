@@ -154,10 +154,9 @@ describe("publish workflow release step", () => {
   it("fails when npm cannot list the published versions", () => {
     const result = release("1.4.3", {
       ...tagPush("v1.4.3"),
-      FAKE_VERSIONS: "",
       FAKE_VERSIONS_EXIT: "72",
     });
-    expect(result.code).not.toBe(0);
+    expect(result.code).toBe(72);
     expect(result.outputs).toEqual({});
   });
 
@@ -377,11 +376,8 @@ describe("publish workflow", () => {
         "fi",
         "# As in javascript-sdk: an already published version (e.g. a re-run)",
         "# is a green no-op rather than a failing publish.",
-        '# A failed lookup must fail here, not read as "not published". npm',
-        "# prints a bare string instead of an array when only one version exists.",
         "PUBLISHED_VERSIONS=$(npm view @absmartly/react-sdk versions --json)",
-        'ALREADY_PUBLISHED=$(jq -nr --arg v "$VERSION" --argjson versions "$PUBLISHED_VERSIONS" \\',
-        `  '$versions | if type == "string" then [.] elif type == "array" then . else error("unexpected npm versions output") end | index($v) != null')`,
+        'ALREADY_PUBLISHED=$(node .github/scripts/publish-checks.mjs published "$VERSION" "$PUBLISHED_VERSIONS")',
         'if [ "$ALREADY_PUBLISHED" = true ]; then',
         '  echo "::notice::@absmartly/react-sdk@${VERSION} is already on npm; publish will be skipped"',
         "fi",

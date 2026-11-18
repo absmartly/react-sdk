@@ -31,15 +31,20 @@ export function assertNpmVersion(npmVersion) {
   }
 }
 
-// The pushed tag must be exactly "v" + package.json version. npm drops build
-// metadata ("+build.1") on publish, so a re-run would not be seen as published.
-export function assertTagMatchesVersion(tag, version) {
+// npm drops build metadata ("+build.1") on publish, so a re-run would not be
+// seen as published.
+export function assertPublishableVersion(version) {
   parseVersion(version);
   if (version.includes("+")) {
     throw new Error(
       `package.json version "${version}" must not contain build metadata: npm drops it`,
     );
   }
+}
+
+// The pushed tag must be exactly "v" + package.json version.
+export function assertTagMatchesVersion(tag, version) {
+  assertPublishableVersion(version);
   if (tag !== `v${version}`) {
     throw new Error(
       `Tag "${tag}" does not match package.json version "${version}" (expected "v${version}")`,
@@ -59,6 +64,22 @@ export function assertRepositoryMatches(repository, githubRepository) {
       `package.json repository.url "${url ?? ""}" must be https://github.com/${githubRepository}`,
     );
   }
+}
+
+// `npm view <pkg> versions --json` prints an array, or a bare string when only
+// one version exists. Anything else is a failed lookup, not "not published".
+export function isPublished(versionsJson, version) {
+  let versions;
+  try {
+    versions = JSON.parse(versionsJson);
+  } catch {
+    versions = undefined;
+  }
+  if (typeof versions === "string") versions = [versions];
+  if (!Array.isArray(versions)) {
+    throw new Error(`Unexpected npm versions output: "${versionsJson}"`);
+  }
+  return versions.includes(version);
 }
 
 function compareRelease(a, b) {
@@ -110,6 +131,10 @@ function main() {
     assertNpmVersion(process.argv[3]);
     return;
   }
+  if (process.argv[2] === "published") {
+    process.stdout.write(String(isPublished(process.argv[4], process.argv[3])));
+    return;
+  }
   const {
     VERSION,
     REPOSITORY,
@@ -120,6 +145,7 @@ function main() {
     REQUIRE_TAG,
   } = process.env;
   assertRepositoryMatches(JSON.parse(REPOSITORY || "null"), GITHUB_REPOSITORY);
+  assertPublishableVersion(VERSION);
   if (REF_TYPE === "tag") {
     assertTagMatchesVersion(REF_NAME, VERSION);
   } else if (REQUIRE_TAG === "true") {
