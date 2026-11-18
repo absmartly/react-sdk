@@ -1,0 +1,140 @@
+name: Publish
+
+# Publishes @absmartly/react-sdk to npm using npm Trusted Publishing (OIDC).
+#
+# - Push a tag "v<version>" matching package.json to publish.
+# - Run manually (workflow_dispatch) with dry_run=true (the default) to run every
+#   step except the actual `npm publish`. A non-dry manual run must be started
+#   on a v* tag ref.
+#
+# The trusted publisher on npmjs.com is configured for this repository, the
+# workflow filename "publish.yml" and the environment "npm"; renaming this file
+# or the environment breaks publishing.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run every step except npm publish"
+        type: boolean
+        default: true
+
+# One queue for all refs: concurrent releases would each read the same npm
+# "latest" and could both publish as latest. queue: max keeps every pending run
+# (the default keeps one and cancels the rest).
+concurrency:
+  group: publish
+  cancel-in-progress: false
+  # Valid per GitHub docs; actionlint does not know it yet (rhysd/actionlint#657).
+  queue: max
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # setup-node writes ${NODE_AUTH_TOKEN} into .npmrc, and Yarn 1 fails to
+      # start if it is unset. The publish step overrides it.
+      NODE_AUTH_TOKEN: ""
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          # No dependency cache: this job can mint an OIDC publish token.
+
+      # Trusted Publishing requires npm >= 11.5.1.
+      - name: Update npm
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g npm@11
+          NPM_VERSION=$(npm --version)
+          node .github/scripts/publish-checks.mjs npm-version "$NPM_VERSION"
+          echo "npm $NPM_VERSION"
+
+      # The repository is locked with yarn.lock (there is no package-lock.json),
+      # so `npm ci` cannot be used; this is the yarn equivalent. Dependency
+      # install scripts are skipped because this job can mint an OIDC token.
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Run tests
+        run: yarn test --run
+
+      - name: Build
+        run: yarn build
+
+      - name: Check tag and resolve npm dist-tag
+        id: release
+        shell: bash
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          REQUIRE_TAG: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./package.json').version")
+          REPOSITORY=$(node -p "JSON.stringify(require('./package.json').repository ?? null)")
+          LATEST_VERSION=$(npm view @absmartly/react-sdk dist-tags.latest)
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "::error::Could not read the current latest version from npm" >&2
+            exit 1
+          fi
+          # As in javascript-sdk: an already published version (e.g. a re-run)
+          # is a green no-op rather than a failing publish.
+          PUBLISHED_VERSIONS=$(npm view @absmartly/react-sdk versions --json)
+          ALREADY_PUBLISHED=$(node .github/scripts/publish-checks.mjs published "$VERSION" "$PUBLISHED_VERSIONS")
+          if [ "$ALREADY_PUBLISHED" = true ]; then
+            echo "::notice::@absmartly/react-sdk@${VERSION} is already on npm; publish will be skipped"
+          fi
+          export VERSION REPOSITORY LATEST_VERSION
+          DIST_TAG=$(node .github/scripts/publish-checks.mjs)
+          echo "Publishing ${VERSION} (npm latest: ${LATEST_VERSION}, dist-tag: ${DIST_TAG:-latest})"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "already_published=${ALREADY_PUBLISHED}" >> "$GITHUB_OUTPUT"
+
+      - name: Preview package contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          # package.json main, module and types must all exist after the build.
+          for f in $(node -p "const p = require('./package.json'); [p.main, p.module, p.types].join(' ')"); do
+            test -f "$f" || { echo "::error::Build output $f is missing" >&2; exit 1; }
+          done
+          npm pack --dry-run --ignore-scripts
+
+      # --ignore-scripts: the build above is the tested artifact; the prepack
+      # script would otherwise run `yarn upgrade` and rebuild with other deps.
+      - name: Publish to npm
+        if: >-
+          steps.release.outputs.already_published != 'true' &&
+          (github.event_name == 'push' || inputs.dry_run == false)
+        shell: bash
+        env:
+          DIST_TAG: ${{ steps.release.outputs.dist_tag }}
+          # Fallback only: npm authenticates with the OIDC trusted publisher
+          # first and uses this token only if OIDC is unavailable. Remove the
+          # NPM_TOKEN secret once Trusted Publishing is confirmed working.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          ARGS=(--provenance --access public --ignore-scripts)
+          if [ -n "$DIST_TAG" ]; then
+            ARGS+=(--tag "$DIST_TAG")
+          fi
+          npm publish "${ARGS[@]}"

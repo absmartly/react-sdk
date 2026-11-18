@@ -3,6 +3,10 @@
   "version": "1.4.2",
   "homepage": "https://github.com/absmartly/react-sdk#README.md",
   "bugs": "https://github.com/absmartly/react-sdk/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/absmartly/react-sdk.git"
+  },
   "keywords": [
     "absmartly",
     "ab-smartly",
