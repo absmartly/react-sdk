@@ -100,7 +100,8 @@ export function assertValidDistTag(tag) {
 // - Stable release not older than latest: "" (becomes latest).
 // - Stable release on an older major than latest: "v<major>-latest", so a 1.x patch never becomes latest.
 // - Stable release on latest's major but older than latest: "v<major>.<minor>-latest".
-// - Prerelease: its first identifier (e.g. "beta"), prefixed "v<major>-" when on an older major.
+// - Prerelease: its first identifier (e.g. "beta"), prefixed "v<major>-" when on an older major,
+//   or "v<major>.<minor>-" when below latest on its major, so a shared channel never moves back.
 export function resolveDistTag(version, latestVersion) {
   const tag = distTagFor(version, latestVersion);
   if (tag) assertValidDistTag(tag);
@@ -117,7 +118,13 @@ function distTagFor(version, latestVersion) {
       /^[A-Za-z][0-9A-Za-z-]*$/.test(first) && first !== "latest"
         ? first
         : "next";
-    return olderMajor ? `v${current.major}-${id}` : id;
+    if (olderMajor) return `v${current.major}-${id}`;
+    // A prerelease of a stable latest's own release ("1.4.2-beta.1") is also below it.
+    const order = compareRelease(current, latest);
+    if (order < 0 || (order === 0 && latest.prerelease.length === 0)) {
+      return `v${current.major}.${current.minor}-${id}`;
+    }
+    return id;
   }
   if (olderMajor) return `v${current.major}-latest`;
   if (compareRelease(current, latest) < 0) {

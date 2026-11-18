@@ -193,6 +193,7 @@ describe("assertRepositoryMatches", () => {
     [{ url: "git+https://github.com/absmartly/javascript-sdk.git" }],
     [{ url: "git+https://github.com/absmartly/react-sdk-fork.git" }],
     [{ url: "git+https://gitlab.com/absmartly/react-sdk.git" }],
+    [{ url: "http://github.com/absmartly/react-sdk.git" }],
   ])("rejects %j", (repository) => {
     expect(() =>
       assertRepositoryMatches(repository, "absmartly/react-sdk"),
@@ -249,6 +250,11 @@ describe("resolveDistTag", () => {
     ["1.4.3-0", "1.4.2", "next"],
     ["2.0.0-latest.1", "1.4.2", "next"],
     ["1.5.0-latest", "2.0.0", "v1-next"],
+    // prereleases below latest on its major keep shared channels moving forward
+    ["1.3.9-beta.0", "1.4.2", "v1.3-beta"],
+    ["1.4.2-beta.1", "1.4.2", "v1.4-beta"],
+    ["1.4.1-0", "1.4.2", "v1.4-next"],
+    ["1.4.3-beta.0", "1.4.3-beta.1", "beta"],
   ])("version %s with latest %s -> %j", (version, latest, expected) => {
     expect(resolveDistTag(version, latest)).toBe(expected);
   });
@@ -258,6 +264,7 @@ describe("resolveDistTag", () => {
       ["1.4.3", "2.0.0"],
       ["1.3.9", "1.4.2"],
       ["1.5.0-beta.0", "2.0.0"],
+      ["1.3.9-beta.0", "1.4.2"],
     ]) {
       expect(resolveDistTag(version, latest)).not.toMatch(/^v?\d+(\.\d+)*$/);
     }
